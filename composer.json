@@ -44,7 +44,7 @@
     },
     "suggest": {
         "sonata-project/doctrine-orm-admin-bundle": "~2.3",
-        "liip/imagine-bundle": "~0.9",
+        "liip/imagine-bundle": "~1.2",
         "rackspace/php-opencloud": "~1.6",
         "sonata-project/seo-bundle": "~1.1",
         "tilleuls/ckeditor-sonata-mediabundle": "~1.0"
