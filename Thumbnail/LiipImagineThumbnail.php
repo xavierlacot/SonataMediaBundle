@@ -39,11 +39,6 @@ class LiipImagineThumbnail implements ThumbnailInterface
 
         if ($format == 'reference') {
             return $provider->getCdnPath($path, $media->getCdnIsFlushable());
-        } else {
-            $path = $this->router->generate(
-                sprintf('_imagine_%s', $format),
-                array('path' => sprintf('%s/%s_%s.jpg', $provider->generatePath($media), $media->getId(), $format))
-            );
         }
 
         return $this->router->generate('liip_imagine_filter',array(
