@@ -32,9 +32,9 @@ Media Entity
 
 The ``Media`` entity comes with common media fields: ``size``, ``length``,
 ``width`` and ``height``. However the provider might require you to add more
-information. As it not possible to store all of the possible information
+information. As it is not possible to store all of the possible information
 into database columns, the provider class can use the ``provider_metadata``
-field to store metadata as a serialize array.
+field to store metadata as a serialized array.
 
 The ``Media`` entity has 3 other provider fields:
 
@@ -310,7 +310,7 @@ The thumbnail template is common to all media and it is quite simple:
 
 .. code-block:: html+jinja
 
-    <img {% for name, value in options %}{{name}}="{{value}}" {% endfor %} />
+    <img {% for name, value in options %}{{ name ~ '="' ~ value ~ '"' }} {% endfor %} />
 
 The media template and media helper are a bit more tricky. Each provider might
 provide a rich set of options to embed the media. The

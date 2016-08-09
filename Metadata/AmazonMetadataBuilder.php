@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,24 +11,27 @@
 
 namespace Sonata\MediaBundle\Metadata;
 
-use Sonata\MediaBundle\Metadata\MetadataBuilderInterface;
-use Sonata\MediaBundle\Model\MediaInterface;
-
 use Aws\S3\Enum\CannedAcl;
 use Aws\S3\Enum\Storage;
 use Guzzle\Http\Mimetypes;
+use Sonata\MediaBundle\Model\MediaInterface;
 
 class AmazonMetadataBuilder implements MetadataBuilderInterface
 {
-
+    /**
+     * @var array
+     */
     protected $settings;
 
+    /**
+     * @var string[]
+     */
     protected $acl = array(
-        'private'            => CannedAcl::PRIVATE_ACCESS,
-        'public'             => CannedAcl::PUBLIC_READ,
-        'open'               => CannedAcl::PUBLIC_READ_WRITE,
-        'auth_read'          => CannedAcl::AUTHENTICATED_READ,
-        'owner_read'         => CannedAcl::BUCKET_OWNER_READ,
+        'private' => CannedAcl::PRIVATE_ACCESS,
+        'public' => CannedAcl::PUBLIC_READ,
+        'open' => CannedAcl::PUBLIC_READ_WRITE,
+        'auth_read' => CannedAcl::AUTHENTICATED_READ,
+        'owner_read' => CannedAcl::BUCKET_OWNER_READ,
         'owner_full_control' => CannedAcl::BUCKET_OWNER_FULL_CONTROL,
     );
 
@@ -41,7 +44,18 @@ class AmazonMetadataBuilder implements MetadataBuilderInterface
     }
 
     /**
-     * Get data passed from the config
+     * {@inheritdoc}
+     */
+    public function get(MediaInterface $media, $filename)
+    {
+        return array_replace_recursive(
+            $this->getDefaultMetadata(),
+            $this->getContentType($filename)
+        );
+    }
+
+    /**
+     * Get data passed from the config.
      *
      * @return array
      */
@@ -69,7 +83,7 @@ class AmazonMetadataBuilder implements MetadataBuilderInterface
 
         //merge cache control header
         if (isset($this->settings['cache_control']) && !empty($this->settings['cache_control'])) {
-            $output['headers']['Cache-Control'] = $this->settings['cache_control'];
+            $output['CacheControl'] = $this->settings['cache_control'];
         }
 
         //merge encryption
@@ -83,7 +97,7 @@ class AmazonMetadataBuilder implements MetadataBuilderInterface
     }
 
     /**
-     * Gets the correct content-type
+     * Gets the correct content-type.
      *
      * @param string $filename
      *
@@ -91,20 +105,9 @@ class AmazonMetadataBuilder implements MetadataBuilderInterface
      */
     protected function getContentType($filename)
     {
-        $extension   = pathinfo($filename, PATHINFO_EXTENSION);
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
         $contentType = Mimetypes::getInstance()->fromExtension($extension);
 
-        return array('contentType'=> $contentType);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function get(MediaInterface $media, $filename)
-    {
-        return array_replace_recursive(
-            $this->getDefaultMetadata(),
-            $this->getContentType($filename)
-        );
+        return array('contentType' => $contentType);
     }
 }

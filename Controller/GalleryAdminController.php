@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -19,23 +19,23 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 class GalleryAdminController extends Controller
 {
     /**
-     * @param string    $view
-     * @param array     $parameters
-     * @param Response  $response
-     * @param Request   $request
+     * @param string   $view
+     * @param array    $parameters
+     * @param Response $response
+     * @param Request  $request
      *
      * @return Response
      */
     public function render($view, array $parameters = array(), Response $response = null, Request $request = null)
     {
-        $parameters['media_pool']            = $this->container->get('sonata.media.pool');
+        $parameters['media_pool'] = $this->container->get('sonata.media.pool');
         $parameters['persistent_parameters'] = $this->admin->getPersistentParameters();
 
         return parent::render($view, $parameters, $response, $request);
     }
 
     /**
-     * return the Response object associated to the list action
+     * return the Response object associated to the list action.
      *
      * @param Request $request
      *
@@ -60,9 +60,9 @@ class GalleryAdminController extends Controller
         $this->get('twig')->getExtension('form')->renderer->setTheme($formView, $this->admin->getFilterTheme());
 
         return $this->render($this->admin->getTemplate('list'), array(
-            'action'     => 'list',
-            'form'       => $formView,
-            'datagrid'   => $datagrid,
+            'action' => 'list',
+            'form' => $formView,
+            'datagrid' => $datagrid,
             'csrf_token' => $this->getCsrfToken('sonata.batch'),
         ));
     }

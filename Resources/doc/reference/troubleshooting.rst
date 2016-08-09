@@ -72,7 +72,7 @@ Please take a look at how the images are compressed by this function in the imag
         $this->resetExceptionHandler();
     }
 
-Finally your settings in your sonataMedia parameters will look like this:
+Finally your settings in your ``sonata_media`` parameters will look like this:
 
 .. code-block:: yaml
 
@@ -80,9 +80,9 @@ Finally your settings in your sonataMedia parameters will look like this:
     sonata_media:
         # if you don't use default namespace configuration
         #class:
-        #    media: MyVendor\MediaBundle\Entity\Media
-        #    gallery: MyVendor\MediaBundle\Entity\Gallery
-        #    gallery_has_media: MyVendor\MediaBundle\Entity\GalleryHasMedia
+        #    media:        MyVendor\MediaBundle\Entity\Media
+        #    gallery:      MyVendor\MediaBundle\Entity\Gallery
+        #    gallery_item: MyVendor\MediaBundle\Entity\GalleryItem
         default_context: default
         db_driver: doctrine_orm # or doctrine_mongodb, doctrine_phpcr
         contexts:
@@ -104,5 +104,5 @@ Finally your settings in your sonataMedia parameters will look like this:
 
         filesystem:
             local:
-                directory:  %kernel.root_dir%/../web/uploads/media
+                directory:  "%kernel.root_dir%/../web/uploads/media"
                 create:     false

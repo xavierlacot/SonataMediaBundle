@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -13,12 +13,12 @@ namespace Sonata\MediaBundle\Provider;
 
 use Gaufrette\Filesystem;
 use Sonata\CoreBundle\Model\Metadata;
-use Sonata\MediaBundle\Resizer\ResizerInterface;
-use Sonata\MediaBundle\Model\MediaInterface;
+use Sonata\CoreBundle\Validator\ErrorElement;
 use Sonata\MediaBundle\CDN\CDNInterface;
 use Sonata\MediaBundle\Generator\GeneratorInterface;
+use Sonata\MediaBundle\Model\MediaInterface;
+use Sonata\MediaBundle\Resizer\ResizerInterface;
 use Sonata\MediaBundle\Thumbnail\ThumbnailInterface;
-use Sonata\CoreBundle\Validator\ErrorElement;
 
 abstract class BaseProvider implements MediaProviderInterface
 {
@@ -27,40 +27,56 @@ abstract class BaseProvider implements MediaProviderInterface
      */
     protected $formats = array();
 
+    /**
+     * @var string[]
+     */
     protected $templates = array();
 
+    /**
+     * @var ResizerInterface
+     */
     protected $resizer;
 
+    /**
+     * @var Filesystem
+     */
     protected $filesystem;
 
+    /**
+     * @var GeneratorInterface
+     */
     protected $pathGenerator;
 
+    /**
+     * @var CDNInterface
+     */
     protected $cdn;
 
+    /**
+     * @var ThumbnailInterface
+     */
     protected $thumbnail;
 
     /**
-     * @param string                                           $name
-     * @param \Gaufrette\Filesystem                            $filesystem
-     * @param \Sonata\MediaBundle\CDN\CDNInterface             $cdn
-     * @param \Sonata\MediaBundle\Generator\GeneratorInterface $pathGenerator
-     * @param \Sonata\MediaBundle\Thumbnail\ThumbnailInterface $thumbnail
+     * @var string
+     */
+    protected $name;
+
+    /**
+     * @param string             $name
+     * @param Filesystem         $filesystem
+     * @param CDNInterface       $cdn
+     * @param GeneratorInterface $pathGenerator
+     * @param ThumbnailInterface $thumbnail
      */
     public function __construct($name, Filesystem $filesystem, CDNInterface $cdn, GeneratorInterface $pathGenerator, ThumbnailInterface $thumbnail)
     {
-        $this->name          = $name;
-        $this->filesystem    = $filesystem;
-        $this->cdn           = $cdn;
+        $this->name = $name;
+        $this->filesystem = $filesystem;
+        $this->cdn = $cdn;
         $this->pathGenerator = $pathGenerator;
-        $this->thumbnail     = $thumbnail;
+        $this->thumbnail = $thumbnail;
     }
-
-    /**
-     * @param \Sonata\MediaBundle\Model\MediaInterface $media
-     *
-     * @return void
-     */
-    abstract protected function doTransform(MediaInterface $media);
 
     /**
      * {@inheritdoc}
@@ -72,6 +88,28 @@ abstract class BaseProvider implements MediaProviderInterface
         }
 
         $this->doTransform($media);
+        $this->flushCdn($media);
+    }
+
+    /**
+     * @param MediaInterface $media
+     */
+    public function flushCdn(MediaInterface $media)
+    {
+        if ($media->getId() && $this->requireThumbnails() && !$media->getCdnIsFlushable()) {
+            $flushPaths = array();
+            foreach ($this->getFormats() as $format => $settings) {
+                if ('admin' === $format || substr($format, 0, strlen($media->getContext())) === $media->getContext()) {
+                    $flushPaths[] = $this->getFilesystem()->get($this->generatePrivateUrl($media, $format), true)->getKey();
+                }
+            }
+            if (!empty($flushPaths)) {
+                $cdnFlushIdentifier = $this->getCdn()->flushPaths($flushPaths);
+                $media->setCdnFlushIdentifier($cdnFlushIdentifier);
+                $media->setCdnIsFlushable(true);
+                $media->setCdnStatus(CDNInterface::STATUS_TO_FLUSH);
+            }
+        }
     }
 
     /**
@@ -109,9 +147,9 @@ abstract class BaseProvider implements MediaProviderInterface
     /**
      * {@inheritdoc}
      */
-    public function removeThumbnails(MediaInterface $media)
+    public function removeThumbnails(MediaInterface $media, $formats = null)
     {
-        $this->thumbnail->delete($this, $media);
+        $this->thumbnail->delete($this, $media, $formats);
     }
 
     /**
@@ -140,7 +178,7 @@ abstract class BaseProvider implements MediaProviderInterface
      */
     public function getProviderMetadata()
     {
-        return new Metadata($this->getName(), $this->getName().".description", false, "SonataMediaBundle", array('class' => 'fa fa-file'));
+        return new Metadata($this->getName(), $this->getName().'.description', false, 'SonataMediaBundle', array('class' => 'fa fa-file'));
     }
 
     /**
@@ -164,7 +202,6 @@ abstract class BaseProvider implements MediaProviderInterface
      */
     public function postRemove(MediaInterface $media)
     {
-
     }
 
     /**
@@ -208,8 +245,7 @@ abstract class BaseProvider implements MediaProviderInterface
     }
 
     /**
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getTemplates()
     {
@@ -286,6 +322,10 @@ abstract class BaseProvider implements MediaProviderInterface
      */
     public function validate(ErrorElement $errorElement, MediaInterface $media)
     {
-
     }
+
+    /**
+     * @param MediaInterface $media
+     */
+    abstract protected function doTransform(MediaInterface $media);
 }

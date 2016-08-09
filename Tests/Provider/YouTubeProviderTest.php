@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,14 +11,14 @@
 
 namespace Sonata\MediaBundle\Tests\Provider;
 
-use Sonata\MediaBundle\Tests\Entity\Media;
-use Sonata\MediaBundle\Provider\YouTubeProvider;
-use Sonata\MediaBundle\Thumbnail\FormatThumbnail;
 use Buzz\Browser;
 use Buzz\Message\Response;
 use Imagine\Image\Box;
+use Sonata\MediaBundle\Provider\YouTubeProvider;
+use Sonata\MediaBundle\Tests\Entity\Media;
+use Sonata\MediaBundle\Thumbnail\FormatThumbnail;
 
-class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
+class YouTubeProviderTest extends AbstractProviderTest
 {
     public function getProvider(Browser $browser = null)
     {
@@ -54,7 +54,7 @@ class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
     {
         $provider = $this->getProvider();
 
-        $media = new Media;
+        $media = new Media();
         $media->setName('Nono le petit robot');
         $media->setProviderName('youtube');
         $media->setProviderReference('BDYAbAtaDzA');
@@ -63,15 +63,15 @@ class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
 
         $media->setId(1023457);
 
-        $this->assertEquals('http://i3.ytimg.com/vi/BDYAbAtaDzA/hqdefault.jpg', $provider->getReferenceImage($media));
+        $this->assertSame('http://i3.ytimg.com/vi/BDYAbAtaDzA/hqdefault.jpg', $provider->getReferenceImage($media));
 
-        $this->assertEquals('default/0011/24', $provider->generatePath($media));
-        $this->assertEquals('/uploads/media/default/0011/24/thumb_1023457_big.jpg', $provider->generatePublicUrl($media, 'big'));
+        $this->assertSame('default/0011/24', $provider->generatePath($media));
+        $this->assertSame('/uploads/media/default/0011/24/thumb_1023457_big.jpg', $provider->generatePublicUrl($media, 'big'));
     }
 
     public function testThumbnail()
     {
-        $response = $this->getMock('Buzz\Message\MessageInterface');
+        $response = $this->getMock('Buzz\Message\AbstractMessage');
         $response->expects($this->once())->method('getContent')->will($this->returnValue('content'));
 
         $browser = $this->getMockBuilder('Buzz\Browser')->getMock();
@@ -80,7 +80,7 @@ class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
 
         $provider = $this->getProvider($browser);
 
-        $media = new Media;
+        $media = new Media();
         $media->setProviderName('youtube');
         $media->setProviderReference('BDYAbAtaDzA');
         $media->setContext('default');
@@ -96,7 +96,7 @@ class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
 
         $provider->generateThumbnails($media);
 
-        $this->assertEquals('default/0011/24/thumb_1023457_big.jpg', $provider->generatePrivateUrl($media, 'big'));
+        $this->assertSame('default/0011/24/thumb_1023457_big.jpg', $provider->generatePrivateUrl($media, 'big'));
     }
 
     public function testTransformWithSig()
@@ -111,18 +111,21 @@ class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
 
         $provider->addFormat('big', array('width' => 200, 'height' => 100, 'constraint' => true));
 
-        $media = new Media;
+        $media = new Media();
         $media->setBinaryContent('BDYAbAtaDzA');
         $media->setId(1023456);
 
         // pre persist the media
         $provider->transform($media);
 
-        $this->assertEquals('Nono le petit robot', $media->getName(), '::getName() return the file name');
-        $this->assertEquals('BDYAbAtaDzA', $media->getProviderReference(), '::getProviderReference() is set');
+        $this->assertSame('Nono le petit robot', $media->getName(), '::getName() return the file name');
+        $this->assertSame('BDYAbAtaDzA', $media->getProviderReference(), '::getProviderReference() is set');
     }
 
-    public function testTransformWithUrl()
+    /**
+     * @dataProvider getUrls
+     */
+    public function testTransformWithUrl($url)
     {
         $response = new Response();
         $response->setContent(file_get_contents(__DIR__.'/../fixtures/valid_youtube.txt'));
@@ -134,15 +137,32 @@ class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
 
         $provider->addFormat('big', array('width' => 200, 'height' => 100, 'constraint' => true));
 
-        $media = new Media;
-        $media->setBinaryContent('http://www.youtube.com/watch?v=BDYAbAtaDzA&feature=g-all-esi&context=asdasdas');
+        $media = new Media();
+        $media->setBinaryContent($url);
         $media->setId(1023456);
 
         // pre persist the media
         $provider->transform($media);
 
-        $this->assertEquals('Nono le petit robot', $media->getName(), '::getName() return the file name');
-        $this->assertEquals('BDYAbAtaDzA', $media->getProviderReference(), '::getProviderReference() is set');
+        $this->assertSame('Nono le petit robot', $media->getName(), '::getName() return the file name');
+        $this->assertSame('BDYAbAtaDzA', $media->getProviderReference(), '::getProviderReference() is set');
+    }
+
+    public static function getUrls()
+    {
+        return array(
+        array('BDYAbAtaDzA'),
+        array('http://www.youtube.com/watch?v=BDYAbAtaDzA&feature=feedrec_grec_index'),
+        array('http://www.youtube.com/v/BDYAbAtaDzA?fs=1&amp;hl=en_US&amp;rel=0'),
+        array('http://www.youtube.com/watch?v=BDYAbAtaDzA#t=0m10s'),
+        array('http://www.youtube.com/embed/BDYAbAtaDzA?rel=0'),
+        array('http://www.youtube.com/watch?v=BDYAbAtaDzA'),
+        array('http://www.m.youtube.com/watch?v=BDYAbAtaDzA'),
+        array('http://m.youtube.com/watch?v=BDYAbAtaDzA'),
+        array('https://www.m.youtube.com/watch?v=BDYAbAtaDzA'),
+        array('https://m.youtube.com/watch?v=BDYAbAtaDzA'),
+        array('http://youtu.be/BDYAbAtaDzA'),
+        );
     }
 
     public function testForm()
@@ -173,7 +193,7 @@ class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
         $provider = $this->getProvider();
 
         $provider->addFormat('admin', array('width' => 100));
-        $media = new Media;
+        $media = new Media();
         $media->setName('Les tests');
         $media->setProviderReference('ASDASDAS.png');
         $media->setId(10);
@@ -183,7 +203,7 @@ class YoutubeProviderTest extends \PHPUnit_Framework_TestCase
         $properties = $provider->getHelperProperties($media, 'admin');
 
         $this->assertInternalType('array', $properties);
-        $this->assertEquals(100, $properties['player_parameters']['height']);
-        $this->assertEquals(100, $properties['player_parameters']['width']);
+        $this->assertSame(100, $properties['player_parameters']['height']);
+        $this->assertSame(100, $properties['player_parameters']['width']);
     }
 }

@@ -1,6 +1,7 @@
 <?php
+
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -8,16 +9,14 @@
  * file that was distributed with this source code.
  */
 
-
 namespace Sonata\MediaBundle\Tests\Controller\Api;
 
 use Sonata\MediaBundle\Controller\Api\MediaController;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class MediaControllerTest
+ * Class MediaControllerTest.
  *
- * @package Sonata\MediaBundle\Tests\Controller\Api
  *
  * @author Hugo Briand <briand@ekino.com>
  */
@@ -26,17 +25,17 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
     public function testGetMediaAction()
     {
         $mManager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
-        $media    = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $media = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
 
         $mManager->expects($this->once())->method('getPager')->will($this->returnValue(array($media)));
 
         $mController = $this->createMediaController($mManager);
 
         $params = $this->getMock('FOS\RestBundle\Request\ParamFetcherInterface');
-        $params->expects($this->once())->method('all')->will($this->returnValue(array('page' => 1, 'count' => 10, 'orderBy' => array('id' => "ASC"))));
+        $params->expects($this->once())->method('all')->will($this->returnValue(array('page' => 1, 'count' => 10, 'orderBy' => array('id' => 'ASC'))));
         $params->expects($this->exactly(3))->method('get');
 
-        $this->assertEquals(array($media), $mController->getMediaAction($params));
+        $this->assertSame(array($media), $mController->getMediaAction($params));
     }
 
     public function testGetMediumAction()
@@ -48,7 +47,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
         $controller = $this->createMediaController($manager);
 
-        $this->assertEquals($media, $controller->getMediumAction(1));
+        $this->assertSame($media, $controller->getMediumAction(1));
     }
 
     /**
@@ -72,25 +71,25 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
         $pool->expects($this->any())->method('getProvider')->will($this->returnValue($provider));
-        $pool->expects($this->once())->method('getFormatNamesByContext')->will($this->returnValue(array('format_name1' => "value1")));
+        $pool->expects($this->once())->method('getFormatNamesByContext')->will($this->returnValue(array('format_name1' => 'value1')));
 
         $controller = $this->createMediaController($manager, $pool);
 
         $expected = array(
             'reference' => array(
-                'properties' => array(
-                    'foo' => "bar"
-                ),
                 'url' => null,
+                'properties' => array(
+                    'foo' => 'bar',
+                ),
             ),
-            'format_name1' =>array(
-                'properties' => array(
-                    'foo' => "bar"
-                ),
+            'format_name1' => array(
                 'url' => null,
+                'properties' => array(
+                    'foo' => 'bar',
+                ),
             ),
         );
-        $this->assertEquals($expected, $controller->getMediumFormatsAction(1));
+        $this->assertSame($expected, $controller->getMediumFormatsAction(1));
     }
 
     public function testGetMediumBinariesAction()
@@ -110,7 +109,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
         $controller = $this->createMediaController($manager, $pool);
 
-        $this->assertEquals($binaryResponse, $controller->getMediumBinaryAction(1, 'format', new Request()));
+        $this->assertSame($binaryResponse, $controller->getMediumBinaryAction(1, 'format', new Request()));
     }
 
     public function testDeleteMediumAction()
@@ -123,7 +122,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
         $expected = array('deleted' => true);
 
-        $this->assertEquals($expected, $controller->deleteMediumAction(1));
+        $this->assertSame($expected, $controller->deleteMediumAction(1));
     }
 
     public function testPutMediumAction()
@@ -140,7 +139,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
         $pool->expects($this->once())->method('getProvider')->will($this->returnValue($provider));
 
         $form = $this->getMockBuilder('Symfony\Component\Form\Form')->disableOriginalConstructor()->getMock();
-        $form->expects($this->once())->method('bind');
+        $form->expects($this->once())->method('handleRequest');
         $form->expects($this->once())->method('isValid')->will($this->returnValue(true));
         $form->expects($this->once())->method('getData')->will($this->returnValue($medium));
 
@@ -166,7 +165,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
         $pool->expects($this->once())->method('getProvider')->will($this->returnValue($provider));
 
         $form = $this->getMockBuilder('Symfony\Component\Form\Form')->disableOriginalConstructor()->getMock();
-        $form->expects($this->once())->method('bind');
+        $form->expects($this->once())->method('handleRequest');
         $form->expects($this->once())->method('isValid')->will($this->returnValue(false));
 
         $factory = $this->getMock('Symfony\Component\Form\FormFactoryInterface');
@@ -192,7 +191,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
         $pool->expects($this->once())->method('getProvider')->will($this->returnValue($provider));
 
         $form = $this->getMockBuilder('Symfony\Component\Form\Form')->disableOriginalConstructor()->getMock();
-        $form->expects($this->once())->method('bind');
+        $form->expects($this->once())->method('handleRequest');
         $form->expects($this->once())->method('isValid')->will($this->returnValue(true));
         $form->expects($this->once())->method('getData')->will($this->returnValue($medium));
 
@@ -201,7 +200,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
         $controller = $this->createMediaController($manager, $pool, $factory);
 
-        $this->assertInstanceOf('FOS\RestBundle\View\View', $controller->postProviderMediumAction("providerName", new Request()));
+        $this->assertInstanceOf('FOS\RestBundle\View\View', $controller->postProviderMediumAction('providerName', new Request()));
     }
 
     /**
@@ -216,10 +215,10 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
         $manager->expects($this->once())->method('create')->will($this->returnValue($medium));
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
-        $pool->expects($this->once())->method('getProvider')->will($this->throwException(new \RuntimeException("exception on getProvder")));
+        $pool->expects($this->once())->method('getProvider')->will($this->throwException(new \RuntimeException('exception on getProvder')));
 
         $controller = $this->createMediaController($manager, $pool);
-        $controller->postProviderMediumAction("non existing provider", new Request());
+        $controller->postProviderMediumAction('non existing provider', new Request());
     }
 
     public function testPutMediumBinaryContentAction()
@@ -230,14 +229,11 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
         $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($media));
 
-        $provider = $this->getMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
-
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
-        $pool->expects($this->once())->method('getProvider')->will($this->returnValue($provider));
 
         $controller = $this->createMediaController($manager, $pool);
 
-        $this->assertEquals($media, $controller->putMediumBinaryContentAction(1, new Request()));
+        $this->assertSame($media, $controller->putMediumBinaryContentAction(1, new Request()));
     }
 
     protected function createMediaController($manager = null, $pool = null, $factory = null)

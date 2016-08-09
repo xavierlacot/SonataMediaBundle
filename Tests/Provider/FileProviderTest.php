@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,15 +11,14 @@
 
 namespace Sonata\MediaBundle\Tests\Provider;
 
-use Symfony\Component\HttpFoundation\File\File;
-use Sonata\MediaBundle\Tests\Entity\Media;
 use Sonata\MediaBundle\Provider\FileProvider;
+use Sonata\MediaBundle\Tests\Entity\Media;
 use Sonata\MediaBundle\Thumbnail\FormatThumbnail;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\Request;
 
-class FileProviderTest extends \PHPUnit_Framework_TestCase
+class FileProviderTest extends AbstractProviderTest
 {
-
     public function getProvider()
     {
         $resizer = $this->getMock('Sonata\MediaBundle\Resizer\ResizerInterface');
@@ -50,18 +49,18 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
     {
         $provider = $this->getProvider();
 
-        $media = new Media;
+        $media = new Media();
         $media->setName('test.txt');
         $media->setProviderReference('ASDASD.txt');
         $media->setContext('default');
 
         $media->setId(1023456);
-        $this->assertEquals('default/0011/24/ASDASD.txt', $provider->getReferenceImage($media));
+        $this->assertSame('default/0011/24/ASDASD.txt', $provider->getReferenceImage($media));
 
-        $this->assertEquals('default/0011/24', $provider->generatePath($media));
+        $this->assertSame('default/0011/24', $provider->generatePath($media));
 
         // default icon image
-        $this->assertEquals('/uploads/media/sonatamedia/files/big/file.png', $provider->generatePublicUrl($media, 'big'));
+        $this->assertSame('/uploads/media/sonatamedia/files/big/file.png', $provider->generatePublicUrl($media, 'big'));
     }
 
     public function testHelperProperies()
@@ -69,7 +68,7 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
         $provider = $this->getProvider();
 
         $provider->addFormat('admin', array('width' => 100));
-        $media = new Media;
+        $media = new Media();
         $media->setName('test.png');
         $media->setProviderReference('ASDASDAS.png');
         $media->setId(10);
@@ -78,7 +77,7 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
         $properties = $provider->getHelperProperties($media, 'admin');
 
         $this->assertInternalType('array', $properties);
-        $this->assertEquals('test.png', $properties['title']);
+        $this->assertSame('test.png', $properties['title']);
     }
 
     public function testForm()
@@ -107,7 +106,7 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
     {
         $provider = $this->getProvider();
 
-        $media = new Media;
+        $media = new Media();
         $media->setName('test.png');
         $media->setId(1023456);
 
@@ -122,7 +121,7 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
 
         $file = __DIR__.'/../fixtures/file.txt';
 
-        $media = new Media;
+        $media = new Media();
         $provider->preUpdate($media);
         $this->assertNull($media->getProviderReference());
 
@@ -136,14 +135,14 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
 
         $file = new \Symfony\Component\HttpFoundation\File\File(realpath(__DIR__.'/../fixtures/file.txt'));
 
-        $media = new Media;
+        $media = new Media();
         $media->setBinaryContent($file);
         $media->setId(1023456);
 
         // pre persist the media
         $provider->transform($media);
 
-        $this->assertEquals('file.txt', $media->getName(), '::getName() return the file name');
+        $this->assertSame('file.txt', $media->getName(), '::getName() return the file name');
         $this->assertNotNull($media->getProviderReference(), '::getProviderReference() is set');
 
         $this->assertFalse($provider->generatePrivateUrl($media, 'big'), '::generatePrivateUrl() return false on non reference formate');
@@ -156,7 +155,7 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
 
         $file = new File(realpath(__DIR__.'/../fixtures/FileProviderTest/0011/24/file.txt'));
 
-        $media = new Media;
+        $media = new Media();
         $media->setBinaryContent($file);
         $media->setProviderReference('file.txt');
         $media->setContext('FileProviderTest');
@@ -169,15 +168,14 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider mediaProvider
-     *
      */
     public function testTransform($expected, $media, $overridePhpSapiName = true)
     {
         $self = $this;
 
-        $closure = function() use ($self, $expected, $media, $overridePhpSapiName){
+        $closure = function () use ($self, $expected, $media, $overridePhpSapiName) {
             if ($overridePhpSapiName) {
-                require_once ('phpSapiNameOverride.php');
+                require_once 'phpSapiNameOverride.php';
             }
 
             $provider = $self->getProvider();
@@ -225,5 +223,96 @@ class FileProviderTest extends \PHPUnit_Framework_TestCase
             array('\Symfony\Component\HttpFoundation\File\File', $media2),
             array(null, $media3),
         );
+    }
+
+    /**
+     * @requires PHP 5.6
+     *
+     * @see https://github.com/sebastianbergmann/phpunit/issues/1409
+     */
+    public function testBinaryContentWithRealPath()
+    {
+        $media = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+
+        $media->expects($this->any())
+            ->method('getProviderReference')
+            ->willReturn('provider');
+
+        $media->expects($this->any())
+            ->method('getId')
+            ->willReturn(10000);
+
+        $media->expects($this->any())
+            ->method('getContext')
+            ->willReturn('context');
+
+        $binaryContent = $this->getMockBuilder('Symfony\Component\HttpFoundation\File\File')
+            ->setMethods(array('getRealPath', 'getPathname'))
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $binaryContent->expects($this->atLeastOnce())
+            ->method('getRealPath')
+            ->willReturn(__DIR__.'/../fixtures/file.txt');
+
+        $binaryContent->expects($this->never())
+            ->method('getPathname');
+
+        $media->expects($this->any())
+            ->method('getBinaryContent')
+            ->willReturn($binaryContent);
+
+        $provider = $this->getProvider();
+
+        $setFileContents = new \ReflectionMethod('Sonata\MediaBundle\Provider\FileProvider', 'setFileContents');
+        $setFileContents->setAccessible(true);
+
+        $setFileContents->invoke($provider, $media);
+    }
+
+    /**
+     * @requires PHP 5.6
+     *
+     * @see https://github.com/sebastianbergmann/phpunit/issues/1409
+     */
+    public function testBinaryContentStreamWrapped()
+    {
+        $media = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+
+        $media->expects($this->any())
+            ->method('getProviderReference')
+            ->willReturn('provider');
+
+        $media->expects($this->any())
+            ->method('getId')
+            ->willReturn(10000);
+
+        $media->expects($this->any())
+            ->method('getContext')
+            ->willReturn('context');
+
+        $binaryContent = $this->getMockBuilder('Symfony\Component\HttpFoundation\File\File')
+            ->setMethods(array('getRealPath', 'getPathname'))
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $binaryContent->expects($this->atLeastOnce())
+            ->method('getRealPath')
+            ->willReturn(false);
+
+        $binaryContent->expects($this->atLeastOnce())
+            ->method('getPathname')
+            ->willReturn(__DIR__.'/../fixtures/file.txt');
+
+        $media->expects($this->any())
+            ->method('getBinaryContent')
+            ->willReturn($binaryContent);
+
+        $provider = $this->getProvider();
+
+        $setFileContents = new \ReflectionMethod('Sonata\MediaBundle\Provider\FileProvider', 'setFileContents');
+        $setFileContents->setAccessible(true);
+
+        $setFileContents->invoke($provider, $media);
     }
 }

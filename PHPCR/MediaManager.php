@@ -1,13 +1,14 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Sonata\MediaBundle\PHPCR;
 
 use Sonata\CoreBundle\Model\BasePHPCRManager;
@@ -16,10 +17,6 @@ class MediaManager extends BasePHPCRManager
 {
     /**
      * {@inheritdoc}
-     *
-     * Warning: previous method signature was : save(MediaInterface $media, $context = null, $providerName = null)
-     *
-     * @throws \InvalidArgumentException When entity is an invalid object
      */
     public function save($entity, $andFlush = true)
     {
@@ -44,7 +41,8 @@ class MediaManager extends BasePHPCRManager
     /**
      * {@inheritdoc}
      */
-    public function getPager(array $criteria, $page, $limit = 10, array $sort = array()){
-        throw new \RuntimeException("Not Implemented yet");
+    public function getPager(array $criteria, $page, $limit = 10, array $sort = array())
+    {
+        throw new \RuntimeException('Not Implemented yet');
     }
 }

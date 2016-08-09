@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,11 +11,10 @@
 
 namespace Sonata\MediaBundle\Templating\Helper;
 
-use Symfony\Component\Templating\Helper\Helper;
 use Sonata\MediaBundle\Model\MediaInterface;
-use Sonata\MediaBundle\Provider\MediaProviderInterface;
 use Sonata\MediaBundle\Provider\Pool;
 use Symfony\Component\Templating\EngineInterface;
+use Symfony\Component\Templating\Helper\Helper;
 
 /**
  * MediaHelper manages action inclusions.
@@ -24,17 +23,23 @@ use Symfony\Component\Templating\EngineInterface;
  */
 class MediaHelper extends Helper
 {
+    /**
+     * @var Pool|null
+     */
     protected $pool = null;
 
+    /**
+     * @var EngineInterface|null
+     */
     protected $templating = null;
 
     /**
-     * @param \Sonata\MediaBundle\Provider\Pool             $mediaService
-     * @param \Symfony\Component\Templating\EngineInterface $templating
+     * @param Pool            $pool
+     * @param EngineInterface $templating
      */
     public function __construct(Pool $pool, EngineInterface $templating)
     {
-        $this->pool       = $pool;
+        $this->pool = $pool;
         $this->templating = $templating;
     }
 
@@ -47,7 +52,7 @@ class MediaHelper extends Helper
     }
 
     /**
-     * Returns the provider view for the provided media
+     * Returns the provider view for the provided media.
      *
      * @param MediaInterface $media
      * @param string         $format
@@ -68,24 +73,14 @@ class MediaHelper extends Helper
         $options = $provider->getHelperProperties($media, $format, $options);
 
         return $this->templating->render($provider->getTemplate('helper_view'), array(
-             'media'    => $media,
-             'format'   => $format,
-             'options'  => $options,
+             'media' => $media,
+             'format' => $format,
+             'options' => $options,
         ));
     }
 
     /**
-     * @param \Sonata\MediaBundle\Model\MediaInterface $media
-     *
-     * @return \Sonata\MediaBundle\Provider\MediaProviderInterface
-     */
-    private function getProvider(MediaInterface $media)
-    {
-        return $this->pool->getProvider($media->getProviderName());
-    }
-
-    /**
-     * Returns the thumbnail for the provided media
+     * Returns the thumbnail for the provided media.
      *
      * @param MediaInterface $media
      * @param string         $format
@@ -113,8 +108,8 @@ class MediaHelper extends Helper
         $options['src'] = $provider->generatePublicUrl($media, $format);
 
         return $this->getTemplating()->render($provider->getTemplate('helper_thumbnail'), array(
-            'media'    => $media,
-            'options'  => $options,
+            'media' => $media,
+            'options' => $options,
         ));
     }
 
@@ -127,7 +122,7 @@ class MediaHelper extends Helper
     public function path($media, $format)
     {
         if (!$media) {
-             return '';
+            return '';
         }
 
         $provider = $this->getProvider($media);
@@ -135,5 +130,15 @@ class MediaHelper extends Helper
         $format = $provider->getFormatName($media, $format);
 
         return $provider->generatePublicUrl($media, $format);
+    }
+
+    /**
+     * @param MediaInterface $media
+     *
+     * @return MediaProviderInterface
+     */
+    private function getProvider(MediaInterface $media)
+    {
+        return $this->pool->getProvider($media->getProviderName());
     }
 }

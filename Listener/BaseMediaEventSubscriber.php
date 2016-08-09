@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,19 +11,21 @@
 
 namespace Sonata\MediaBundle\Listener;
 
-use Doctrine\Common\EventSubscriber;
 use Doctrine\Common\EventArgs;
-
+use Doctrine\Common\EventSubscriber;
 use Sonata\MediaBundle\Model\MediaInterface;
 use Sonata\MediaBundle\Provider\Pool;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 abstract class BaseMediaEventSubscriber implements EventSubscriber
 {
+    /**
+     * @var ContainerInterface
+     */
     protected $container;
 
     /**
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+     * @param ContainerInterface $container
      */
     public function __construct(ContainerInterface $container)
     {
@@ -31,7 +33,7 @@ abstract class BaseMediaEventSubscriber implements EventSubscriber
     }
 
     /**
-     * @return \Sonata\MediaBundle\Provider\Pool
+     * @return Pool
      */
     public function getPool()
     {
@@ -39,43 +41,7 @@ abstract class BaseMediaEventSubscriber implements EventSubscriber
     }
 
     /**
-     * @abstract
-     *
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return void
-     */
-    abstract protected function recomputeSingleEntityChangeSet(EventArgs $args);
-
-     /**
-     * @abstract
-     *
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return \Sonata\MediaBundle\Model\MediaInterface
-     */
-    abstract protected function getMedia(EventArgs $args);
-
-    /**
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return \Sonata\MediaBundle\Provider\MediaProviderInterface
-     */
-    protected function getProvider(EventArgs $args)
-    {
-        $media = $this->getMedia($args);
-
-        if (!$media instanceof MediaInterface) {
-            return null;
-        }
-
-        return $this->getPool()->getProvider($media->getProviderName());
-    }
-
-    /**
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return void
+     * @param EventArgs $args
      */
     public function postUpdate(EventArgs $args)
     {
@@ -87,9 +53,7 @@ abstract class BaseMediaEventSubscriber implements EventSubscriber
     }
 
     /**
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return void
+     * @param EventArgs $args
      */
     public function postRemove(EventArgs $args)
     {
@@ -101,9 +65,7 @@ abstract class BaseMediaEventSubscriber implements EventSubscriber
     }
 
     /**
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return void
+     * @param EventArgs $args
      */
     public function postPersist(EventArgs $args)
     {
@@ -115,9 +77,7 @@ abstract class BaseMediaEventSubscriber implements EventSubscriber
     }
 
     /**
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return void
+     * @param EventArgs $args
      */
     public function preUpdate(EventArgs $args)
     {
@@ -132,9 +92,7 @@ abstract class BaseMediaEventSubscriber implements EventSubscriber
     }
 
     /**
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return void
+     * @param EventArgs $args
      */
     public function preRemove(EventArgs $args)
     {
@@ -146,9 +104,7 @@ abstract class BaseMediaEventSubscriber implements EventSubscriber
     }
 
     /**
-     * @param \Doctrine\Common\EventArgs $args
-     *
-     * @return void
+     * @param EventArgs $args
      */
     public function prePersist(EventArgs $args)
     {
@@ -158,5 +114,33 @@ abstract class BaseMediaEventSubscriber implements EventSubscriber
 
         $provider->transform($this->getMedia($args));
         $provider->prePersist($this->getMedia($args));
+    }
+
+    /**
+     * @param EventArgs $args
+     */
+    abstract protected function recomputeSingleEntityChangeSet(EventArgs $args);
+
+    /**
+     * @param EventArgs $args
+     *
+     * @return \Sonata\MediaBundle\Model\MediaInterface
+     */
+    abstract protected function getMedia(EventArgs $args);
+
+    /**
+     * @param EventArgs $args
+     *
+     * @return MediaProviderInterface
+     */
+    protected function getProvider(EventArgs $args)
+    {
+        $media = $this->getMedia($args);
+
+        if (!$media instanceof MediaInterface) {
+            return;
+        }
+
+        return $this->getPool()->getProvider($media->getProviderName());
     }
 }

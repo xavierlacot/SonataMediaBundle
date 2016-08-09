@@ -10,9 +10,11 @@ Full configuration options:
         class:
             media:              Application\Sonata\MediaBundle\Entity\Media
             gallery:            Application\Sonata\MediaBundle\Entity\Gallery
-            gallery_has_media:  Application\Sonata\MediaBundle\Entity\GalleryHasMedia
+            gallery_item:       Application\Sonata\MediaBundle\Entity\GalleryItem
+            category:           Application\Sonata\ClassificationBundle\Entity\Category
 
         default_context: default
+        admin_format:   { width: 200 , quality: 90, format: 'jpg'}
         contexts:
             default:  # the default context is mandatory
                 download:
@@ -65,13 +67,19 @@ Full configuration options:
                 password:
                 username:
 
+            cloudfront:
+                path:       http://xxxxxxxxxxxxxx.cloudfront.net/uploads/media
+                distribution_id:
+                key:
+                secret:
+
             fallback:
                 master:     sonata.media.cdn.panther
                 fallback:   sonata.media.cdn.server
 
         filesystem:
             local:
-                directory:  %kernel.root_dir%/../web/uploads/media
+                directory:  "%kernel.root_dir%/../web/uploads/media"
                 create:     false
 
             ftp:

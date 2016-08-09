@@ -1,8 +1,9 @@
 <?php
+
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
- * (c); Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,7 +14,17 @@ namespace Sonata\MediaBundle\Model;
 interface GalleryInterface
 {
     /**
-     * Set name
+     * @return string
+     */
+    public function __toString();
+
+    /**
+     * @return int
+     */
+    public function getId();
+
+    /**
+     * Set name.
      *
      * @param string $name
      */
@@ -32,49 +43,49 @@ interface GalleryInterface
     public function setContext($context);
 
     /**
-     * Get name
+     * Get name.
      *
      * @return string $name
      */
     public function getName();
 
     /**
-     * Set enabled
+     * Set enabled.
      *
-     * @param boolean $enabled
+     * @param bool $enabled
      */
     public function setEnabled($enabled);
 
     /**
-     * Get enabled
+     * Get enabled.
      *
-     * @return boolean $enabled
+     * @return bool $enabled
      */
     public function getEnabled();
 
     /**
-     * Set updated_at
+     * Set updated_at.
      *
      * @param \Datetime $updatedAt
      */
     public function setUpdatedAt(\DateTime $updatedAt = null);
 
     /**
-     * Get updated_at
+     * Get updated_at.
      *
      * @return \Datetime $updatedAt
      */
     public function getUpdatedAt();
 
     /**
-     * Set created_at
+     * Set created_at.
      *
      * @param \Datetime $createdAt
      */
     public function setCreatedAt(\DateTime $createdAt = null);
 
     /**
-     * Get created_at
+     * Get created_at.
      *
      * @return \Datetime $createdAt
      */
@@ -91,22 +102,17 @@ interface GalleryInterface
     public function getDefaultFormat();
 
     /**
-     * @param array $galleryHasMedias
+     * @param array $galleryItems
      */
-    public function setGalleryHasMedias($galleryHasMedias);
+    public function setGalleryItems($galleryItems);
 
     /**
-     * @return array
+     * @return GalleryItemInterface[]
      */
-    public function getGalleryHasMedias();
+    public function getGalleryItems();
 
     /**
-     * @param GalleryHasMediaInterface $galleryHasMedia
+     * @param GalleryItemInterface $galleryItem
      */
-    public function addGalleryHasMedias(GalleryHasMediaInterface $galleryHasMedia);
-
-    /**
-     * @return string
-     */
-    public function __toString();
+    public function addGalleryItem(GalleryItemInterface $galleryItem);
 }

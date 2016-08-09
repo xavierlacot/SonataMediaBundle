@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -15,7 +15,7 @@ use Sonata\BlockBundle\Block\BlockContextInterface;
 use Sonata\SeoBundle\Block\Breadcrumb\BaseBreadcrumbMenuBlockService;
 
 /**
- * Abstract class for media breadcrumbs
+ * Abstract class for media breadcrumbs.
  *
  * @author Sylvain Deloux <sylvain.deloux@ekino.com>
  */
@@ -29,8 +29,8 @@ abstract class BaseGalleryBreadcrumbBlockService extends BaseBreadcrumbMenuBlock
         $menu = parent::getRootMenu($blockContext);
 
         $menu->addChild('sonata_media_gallery_index', array(
-            'route'  => 'sonata_media_gallery_index',
-            'extras' => array('translation_domain' => 'SonataMediaBundle')
+            'route' => 'sonata_media_gallery_index',
+            'extras' => array('translation_domain' => 'SonataMediaBundle'),
         ));
 
         return $menu;

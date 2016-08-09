@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,13 +11,13 @@
 
 namespace Sonata\MediaBundle\Tests\Provider;
 
-use Sonata\MediaBundle\Tests\Entity\Media;
-use Sonata\MediaBundle\Provider\BaseProvider;
-use Sonata\MediaBundle\Model\MediaInterface;
 use Sonata\AdminBundle\Form\FormMapper;
+use Sonata\MediaBundle\Model\MediaInterface;
+use Sonata\MediaBundle\Provider\BaseProvider;
+use Sonata\MediaBundle\Tests\Entity\Media;
 use Symfony\Component\Form\FormBuilder;
 
-class BaseProviderTest extends \PHPUnit_Framework_TestCase
+class BaseProviderTest extends AbstractProviderTest
 {
     public function getProvider()
     {
@@ -47,11 +47,11 @@ class BaseProviderTest extends \PHPUnit_Framework_TestCase
     {
         $provider = $this->getProvider();
         $provider->setTemplates(array(
-            'edit' => 'edit.twig'
+            'edit' => 'edit.twig',
         ));
 
         $this->assertInternalType('array', $provider->getTemplates());
-        $this->assertEquals('edit.twig', $provider->getTemplate('edit'));
+        $this->assertSame('edit.twig', $provider->getTemplate('edit'));
 
         $this->assertInstanceOf('\Sonata\MediaBundle\CDN\CDNInterface', $provider->getCdn());
 
@@ -59,30 +59,30 @@ class BaseProviderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInternalType('array', $provider->getFormat('small'));
 
-        $media = new \Sonata\MediaBundle\Tests\Entity\Media;
+        $media = new \Sonata\MediaBundle\Tests\Entity\Media();
         $media->setContext('test');
 
-        $this->assertEquals('admin', $provider->getFormatName($media, 'admin'));
-        $this->assertEquals('reference', $provider->getFormatName($media, 'reference'));
-        $this->assertEquals('test_small', $provider->getFormatName($media, 'small'));
-        $this->assertEquals('test_small', $provider->getFormatName($media, 'test_small'));
+        $this->assertSame('admin', $provider->getFormatName($media, 'admin'));
+        $this->assertSame('reference', $provider->getFormatName($media, 'reference'));
+        $this->assertSame('test_small', $provider->getFormatName($media, 'small'));
+        $this->assertSame('test_small', $provider->getFormatName($media, 'test_small'));
     }
 
     public function testGetCdnPath()
     {
         $provider = $this->getProvider();
-        $this->assertEquals('/uploads/media/my_file.txt', $provider->getCdnPath('my_file.txt', false));
+        $this->assertSame('/uploads/media/my_file.txt', $provider->getCdnPath('my_file.txt', false));
     }
 
     public function testMetadata()
     {
         $provider = $this->getProvider();
 
-        $this->assertEquals("test", $provider->getProviderMetadata()->getTitle());
-        $this->assertEquals("test.description", $provider->getProviderMetadata()->getDescription());
+        $this->assertSame('test', $provider->getProviderMetadata()->getTitle());
+        $this->assertSame('test.description', $provider->getProviderMetadata()->getDescription());
         $this->assertFalse($provider->getProviderMetadata()->getImage());
-        $this->assertEquals("fa fa-file", $provider->getProviderMetadata()->getOption('class'));
-        $this->assertEquals("SonataMediaBundle", $provider->getProviderMetadata()->getDomain());
+        $this->assertSame('fa fa-file', $provider->getProviderMetadata()->getOption('class'));
+        $this->assertSame('SonataMediaBundle', $provider->getProviderMetadata()->getDomain());
     }
 }
 
@@ -91,7 +91,7 @@ class TestProvider extends BaseProvider
     /**
      * {@inheritdoc}
      */
-    public function getHelperProperties(MediaInterface $media, $format)
+    public function getHelperProperties(MediaInterface $media, $format, $options = array())
     {
         // TODO: Implement getHelperProperties() method.
     }
@@ -149,7 +149,7 @@ class TestProvider extends BaseProvider
      */
     public function generatePrivateUrl(MediaInterface $media, $format)
     {
-      // TODO: Implement generatePrivateUrl() method.
+        // TODO: Implement generatePrivateUrl() method.
     }
 
     /**
@@ -157,7 +157,7 @@ class TestProvider extends BaseProvider
      */
     public function generatePublicUrl(MediaInterface $media, $format)
     {
-      // TODO: Implement generatePublicUrl() method.
+        // TODO: Implement generatePublicUrl() method.
     }
 
     /**
@@ -165,7 +165,7 @@ class TestProvider extends BaseProvider
      */
     public function getReferenceFile(MediaInterface $media)
     {
-      // TODO: Implement getReferenceFile() method.
+        // TODO: Implement getReferenceFile() method.
     }
 
     /**
@@ -203,14 +203,6 @@ class TestProvider extends BaseProvider
     /**
      * {@inheritdoc}
      */
-    protected function doTransform(MediaInterface $media)
-    {
-        // TODO: Implement doTransform() method.
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function buildMediaType(FormBuilder $formBuilder)
     {
         // TODO: Implement buildMediaType() method.
@@ -222,5 +214,13 @@ class TestProvider extends BaseProvider
     public function updateMetadata(MediaInterface $media, $force = false)
     {
         // TODO: Implement updateMetadata() method.
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function doTransform(MediaInterface $media)
+    {
+        // TODO: Implement doTransform() method.
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -12,10 +12,10 @@
 namespace Sonata\MediaBundle\PHPCR;
 
 use Sonata\MediaBundle\Model\Gallery;
-use Sonata\MediaBundle\Model\GalleryHasMediaInterface;
+use Sonata\MediaBundle\Model\GalleryItemInterface;
 
 /**
- * Bundle\MediaBundle\Document\BaseGallery
+ * Bundle\MediaBundle\Document\BaseGallery.
  */
 abstract class BaseGallery extends Gallery
 {
@@ -29,11 +29,11 @@ abstract class BaseGallery extends Gallery
      */
     public function __construct()
     {
-        $this->galleryHasMedias = new \Doctrine\Common\Collections\ArrayCollection;
+        $this->galleryItems = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     /**
-     * Get universal unique id
+     * Get universal unique id.
      *
      * @return string
      */
@@ -45,50 +45,50 @@ abstract class BaseGallery extends Gallery
     /**
      * {@inheritdoc}
      */
-    public function addGalleryHasMedias(GalleryHasMediaInterface $galleryHasMedia)
+    public function addGalleryItem(GalleryItemInterface $galleryItem)
     {
-        $galleryHasMedia->setGallery($this);
+        $galleryItem->setGallery($this);
 
-        // set nodename of GalleryHasMedia
-        if (!$galleryHasMedia->getNodename()) {
-            $galleryHasMedia->setNodename(
-                'media'.($this->galleryHasMedias->count() + 1)
+        // set nodename of GalleryItem
+        if (!$galleryItem->getNodename()) {
+            $galleryItem->setNodename(
+                'media'.($this->galleryItems->count() + 1)
             );
         }
 
-        $this->galleryHasMedias->set($galleryHasMedia->getNodename(), $galleryHasMedia);
+        $this->galleryItems->set($galleryItem->getNodename(), $galleryItem);
     }
 
     /**
-     * Pre persist method
+     * Pre persist method.
      */
     public function prePersist()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
 
-        $this->reorderGalleryHasMedia();
+        $this->reorderGalleryItems();
     }
 
     /**
-     * Pre Update method
+     * Pre Update method.
      */
     public function preUpdate()
     {
         $this->updatedAt = new \DateTime();
 
-        $this->reorderGalleryHasMedia();
+        $this->reorderGalleryItems();
     }
 
     /**
-     * Reorders $galleryHasMedia items based on their position
+     * Reorders gallery items based on their position.
      */
-    public function reorderGalleryHasMedia()
+    public function reorderGalleryItems()
     {
-        if ($this->getGalleryHasMedias() && $this->getGalleryHasMedias() instanceof \IteratorAggregate) {
+        if ($this->getGalleryItems() && $this->getGalleryItems() instanceof \IteratorAggregate) {
 
             // reorder
-            $iterator = $this->getGalleryHasMedias()->getIterator();
+            $iterator = $this->getGalleryItems()->getIterator();
 
             $iterator->uasort(function ($a, $b) {
                 if ($a->getPosition() === $b->getPosition()) {
@@ -98,7 +98,7 @@ abstract class BaseGallery extends Gallery
                 return $a->getPosition() > $b->getPosition() ? 1 : -1;
             });
 
-            $this->setGalleryHasMedias($iterator);
+            $this->setGalleryItems($iterator);
         }
     }
 }

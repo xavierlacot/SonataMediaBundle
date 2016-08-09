@@ -1,6 +1,7 @@
 <?php
+
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -15,33 +16,47 @@ use Doctrine\Common\Collections\ArrayCollection;
 abstract class Gallery implements GalleryInterface
 {
     /**
-     * @var string $name
+     * @var string
      */
     protected $context;
 
     /**
-     * @var string $name
+     * @var string
      */
     protected $name;
 
     /**
-     * @var boolean $enabled
+     * @var bool
      */
     protected $enabled;
 
     /**
-     * @var \Datetime $updatedAt
+     * @var \Datetime
      */
     protected $updatedAt;
 
     /**
-     * @var \Datetime $createdAt
+     * @var \Datetime
      */
     protected $createdAt;
 
+    /**
+     * @var string
+     */
     protected $defaultFormat;
 
-    protected $galleryHasMedias;
+    /**
+     * @var GalleryItemInterface[]
+     */
+    protected $galleryItems;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function __toString()
+    {
+        return $this->getName() ?: '-';
+    }
 
     /**
      * {@inheritdoc}
@@ -126,43 +141,35 @@ abstract class Gallery implements GalleryInterface
     /**
      * {@inheritdoc}
      */
-    public function setGalleryHasMedias($galleryHasMedias)
+    public function setGalleryItems($galleryItems)
     {
-        $this->galleryHasMedias = new ArrayCollection();
+        $this->galleryItems = new ArrayCollection();
 
-        foreach ($galleryHasMedias as $galleryHasMedia) {
-            $this->addGalleryHasMedias($galleryHasMedia);
+        foreach ($galleryItems as $galleryItem) {
+            $this->addGalleryItem($galleryItem);
         }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getGalleryHasMedias()
+    public function getGalleryItems()
     {
-        return $this->galleryHasMedias;
+        return $this->galleryItems;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function addGalleryHasMedias(GalleryHasMediaInterface $galleryHasMedia)
+    public function addGalleryItem(GalleryItemInterface $galleryItem)
     {
-        $galleryHasMedia->setGallery($this);
+        $galleryItem->setGallery($this);
 
-        $this->galleryHasMedias[] = $galleryHasMedia;
+        $this->galleryItems[] = $galleryItem;
     }
 
     /**
      * {@inheritdoc}
-     */
-    public function __toString()
-    {
-        return $this->getName() ?: '-';
-    }
-
-    /**
-     * @param string $context
      */
     public function setContext($context)
     {
@@ -170,7 +177,7 @@ abstract class Gallery implements GalleryInterface
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getContext()
     {

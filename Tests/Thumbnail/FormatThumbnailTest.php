@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,13 +11,10 @@
 
 namespace Sonata\MediaBundle\Tests\Security;
 
-use Sonata\MediaBundle\Thumbnail\FormatThumbnail;
-use Sonata\MediaBundle\Provider\MediaProviderInterface;
-use Sonata\MediaBundle\Model\MediaInterface;
+use Gaufrette\Adapter\InMemory;
 use Gaufrette\File;
 use Gaufrette\Filesystem;
-use Gaufrette\Adapter\InMemory;
-use Sonata\MediaBundle\Resizer\ResizerInterface;
+use Sonata\MediaBundle\Thumbnail\FormatThumbnail;
 
 class FormatThumbnailTest extends \PHPUnit_Framework_TestCase
 {

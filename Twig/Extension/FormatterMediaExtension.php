@@ -1,9 +1,9 @@
 <?php
 
 /*
- * This file is part of sonata-project.
+ * This file is part of the Sonata Project package.
  *
- * (c) 2010 Thomas Rabaix
+ * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,11 +13,14 @@ namespace Sonata\MediaBundle\Twig\Extension;
 
 use Sonata\FormatterBundle\Extension\BaseProxyExtension;
 use Sonata\MediaBundle\Twig\TokenParser\MediaTokenParser;
-use Sonata\MediaBundle\Twig\TokenParser\ThumbnailTokenParser;
 use Sonata\MediaBundle\Twig\TokenParser\PathTokenParser;
+use Sonata\MediaBundle\Twig\TokenParser\ThumbnailTokenParser;
 
 class FormatterMediaExtension extends BaseProxyExtension
 {
+    /**
+     * @var \Twig_Extension
+     */
     protected $twigExtension;
 
     /**
@@ -36,7 +39,7 @@ class FormatterMediaExtension extends BaseProxyExtension
         return array(
             'media',
             'path',
-            'thumbnail'
+            'thumbnail',
         );
     }
 
@@ -47,8 +50,8 @@ class FormatterMediaExtension extends BaseProxyExtension
     {
         return array(
             'Sonata\MediaBundle\Model\MediaInterface' => array(
-                'getproviderreference'
-            )
+                'getproviderreference',
+            ),
         );
     }
 
@@ -81,36 +84,36 @@ class FormatterMediaExtension extends BaseProxyExtension
     }
 
     /**
-     * @param integer $media
-     * @param string  $format
-     * @param array   $options
+     * @param int    $media
+     * @param string $format
+     * @param array  $options
      *
      * @return string
      */
-    public function media($media = null, $format, $options = array())
+    public function media($media, $format, $options = array())
     {
         return $this->getTwigExtension()->media($media, $format, $options);
     }
 
     /**
-     * @param integer $media
-     * @param string  $format
-     * @param array   $options
+     * @param int    $media
+     * @param string $format
+     * @param array  $options
      *
      * @return string
      */
-    public function thumbnail($media = null, $format, $options = array())
+    public function thumbnail($media, $format, $options = array())
     {
         return $this->getTwigExtension()->thumbnail($media, $format, $options);
     }
 
     /**
-     * @param integer $media
-     * @param string  $format
+     * @param int    $media
+     * @param string $format
      *
      * @return string
      */
-    public function path($media = null, $format)
+    public function path($media, $format)
     {
         return $this->getTwigExtension()->path($media, $format);
     }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -13,28 +13,43 @@ namespace Sonata\MediaBundle\Security;
 
 use Sonata\MediaBundle\Model\MediaInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Translation\TranslatorInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * @author Ahmet Akbana <ahmetakbana@gmail.com>
+ */
 class SessionDownloadStrategy implements DownloadStrategyInterface
 {
-    protected $container;
-
+    /**
+     * @var TranslatorInterface
+     */
     protected $translator;
 
+    /**
+     * @var int
+     */
     protected $times;
 
+    /**
+     * @var string
+     */
     protected $sessionKey = 'sonata/media/session/times';
 
     /**
-     * @param \Symfony\Component\Translation\TranslatorInterface        $translator
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-     * @param int                                                       $times
+     * @var SessionInterface
      */
-    public function __construct(TranslatorInterface $translator, ContainerInterface $container, $times)
+    private $session;
+
+    /**
+     * @param TranslatorInterface $translator
+     * @param SessionInterface    $session
+     * @param int                 $times
+     */
+    public function __construct(TranslatorInterface $translator, SessionInterface $session, $times)
     {
-        $this->times      = $times;
-        $this->container  = $container;
+        $this->times = $times;
+        $this->session = $session;
         $this->translator = $translator;
     }
 
@@ -43,19 +58,15 @@ class SessionDownloadStrategy implements DownloadStrategyInterface
      */
     public function isGranted(MediaInterface $media, Request $request)
     {
-        if (!$this->container->has('session')) {
-            return false;
-        }
-
-        $times = $this->getSession()->get($this->sessionKey, 0);
+        $times = $this->session->get($this->sessionKey, 0);
 
         if ($times >= $this->times) {
             return false;
         }
 
-        $times++;
+        ++$times;
 
-        $this->getSession()->set($this->sessionKey, $times);
+        $this->session->set($this->sessionKey, $times);
 
         return true;
     }
@@ -65,14 +76,11 @@ class SessionDownloadStrategy implements DownloadStrategyInterface
      */
     public function getDescription()
     {
-        return $this->translator->trans('description.session_download_strategy', array('%times%' => $this->times), 'SonataMediaBundle');
-    }
-
-    /**
-     * @return \Symfony\Component\HttpFoundation\Session
-     */
-    private function getSession()
-    {
-        return $this->container->get('session');
+        return $this->translator->transChoice(
+            'description.session_download_strategy',
+            $this->times,
+            array('%times%' => $this->times),
+            'SonataMediaBundle'
+        );
     }
 }

@@ -4,18 +4,31 @@ Command Line Tools
 Media commands
 --------------
 
-Synchronize
-^^^^^^^^^^^
+Synchronize thumbnails
+^^^^^^^^^^^^^^^^^^^^^^
 
-Synchronize thumbnail for the provider ``sonata.media.provider.image`` with the ``default`` context.
+Synchronize thumbnails for the provider ``sonata.media.provider.image`` in the ``default`` context.
 
 .. note::
 
-   There is also an interactive shell for the parameter.
+   There is also an interactive shell for parameters.
 
 .. code-block:: bash
 
    php app/console sonata:media:sync-thumbnails sonata.media.provider.image default
+
+Remove thumbnails
+^^^^^^^^^^^^^^^^^
+
+Remove thumbnails for the provider ``sonata.media.provider.image`` in the ``default`` context and ``small`` format.
+
+.. note::
+
+   There is also an interactive shell for parameters.
+
+.. code-block:: bash
+
+   php app/console sonata:media:remove-thumbnails sonata.media.provider.image default small
 
 Update metadata
 ^^^^^^^^^^^^^^^
@@ -24,7 +37,7 @@ Update metadata for a set of media for the provider ``sonata.media.provider.yout
 
 .. note::
 
-   There is also an interactive shell for the parameter.
+   There is also an interactive shell for parameters.
 
 .. code-block:: bash
 
@@ -80,3 +93,12 @@ The medias.csv file contains the following lines::
    sonata.media.provider.dailymotion,default,http://www.dailymotion.com/video/xqziut_tutoriel-video-symfony-2-twig_lifestyle
    sonata.media.provider.dailymotion,default,http://www.dailymotion.com/video/x9bgxs_php-tv-4-magento-mysql-symfony-zend_tech
    sonata.media.provider.dailymotion,default,http://www.dailymotion.com/video/xhq4c5_slyblog-tutoriel-video-symfony-1-4-partie-2-2_tech
+
+Fix missing root categories
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Creates default root categories for the ``SonataClassificationBundle`` if they don't exist. This command should be executed when creating a new context under the ``contexts`` config tree.
+
+.. code-block:: bash
+
+   php app/console sonata:media:fix-media-context

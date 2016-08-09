@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -109,27 +109,27 @@ class FakeHttpWrapper
     {
     }
 
-    public function  stream_set_option($option, $arg1, $arg2)
+    public function stream_set_option($option, $arg1, $arg2)
     {
     }
 
-    public function  stream_stat()
+    public function stream_stat()
     {
     }
 
-    public function  stream_tell()
+    public function stream_tell()
     {
     }
 
-    public function  stream_write($data)
+    public function stream_write($data)
     {
     }
 
-    public function  unlink($path)
+    public function unlink($path)
     {
     }
 
-    public function  url_stat($path, $flags)
+    public function url_stat($path, $flags)
     {
     }
 }

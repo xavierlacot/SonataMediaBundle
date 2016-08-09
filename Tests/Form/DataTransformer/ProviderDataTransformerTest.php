@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -23,7 +23,7 @@ class ProviderDataTransformerTest extends \PHPUnit_Framework_TestCase
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
 
         $transformer = new ProviderDataTransformer($pool, 'stdClass');
-        $this->assertEquals('foo', $transformer->reverseTransform('foo'));
+        $this->assertSame('foo', $transformer->reverseTransform('foo'));
     }
 
     /**
@@ -39,7 +39,7 @@ class ProviderDataTransformerTest extends \PHPUnit_Framework_TestCase
         $media->expects($this->any())->method('getBinaryContent')->will($this->returnValue('xcs'));
 
         $transformer = new ProviderDataTransformer($pool, 'stdClass', array(
-            'new_on_update' => false
+            'new_on_update' => false,
         ));
         $transformer->reverseTransform($media);
     }
@@ -58,7 +58,7 @@ class ProviderDataTransformerTest extends \PHPUnit_Framework_TestCase
         $media->expects($this->any())->method('getBinaryContent')->will($this->returnValue('xcs'));
 
         $transformer = new ProviderDataTransformer($pool, 'stdClass', array(
-            'new_on_update' => false
+            'new_on_update' => false,
         ));
         $transformer->reverseTransform($media);
     }
@@ -79,9 +79,9 @@ class ProviderDataTransformerTest extends \PHPUnit_Framework_TestCase
 
         $transformer = new ProviderDataTransformer($pool, 'stdClass', array(
             'new_on_update' => false,
-            'empty_on_new' => false
+            'empty_on_new' => false,
         ));
-        $this->assertEquals($media, $transformer->reverseTransform($media));
+        $this->assertSame($media, $transformer->reverseTransform($media));
     }
 
     public function testReverseTransformWithMediaAndNoBinaryContent()
@@ -96,7 +96,7 @@ class ProviderDataTransformerTest extends \PHPUnit_Framework_TestCase
         $media->expects($this->any())->method('getBinaryContent')->will($this->returnValue(null));
 
         $transformer = new ProviderDataTransformer($pool, 'stdClass');
-        $this->assertEquals($media, $transformer->reverseTransform($media));
+        $this->assertSame($media, $transformer->reverseTransform($media));
     }
 
     public function testReverseTransformWithMediaAndUploadFileInstance()
@@ -111,9 +111,8 @@ class ProviderDataTransformerTest extends \PHPUnit_Framework_TestCase
         $media->expects($this->any())->method('getBinaryContent')->will($this->returnValue(new UploadedFile(__FILE__, 'ProviderDataTransformerTest')));
 
         $transformer = new ProviderDataTransformer($pool, 'stdClass', array(
-            'new_on_update' => false
+            'new_on_update' => false,
         ));
         $transformer->reverseTransform($media);
-
     }
 }

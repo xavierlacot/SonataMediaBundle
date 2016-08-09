@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,45 +11,57 @@
 
 namespace Sonata\MediaBundle\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\Config\Definition\Processor;
-
 use Sonata\EasyExtendsBundle\Mapper\DoctrineCollector;
+use Symfony\Component\Config\Definition\Processor;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
- * MediaExtension
- *
+ * MediaExtension.
  *
  * @author     Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class SonataMediaExtension extends Extension
 {
     /**
-     * Loads the url shortener configuration.
-     *
-     * @param array            $configs   An array of configuration settings
-     * @param ContainerBuilder $container A ContainerBuilder instance
+     * {@inheritdoc}
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $processor     = new Processor();
+        $processor = new Processor();
         $configuration = new Configuration();
-        $config        = $processor->processConfiguration($configuration, $configs);
+        $config = $processor->processConfiguration($configuration, $configs);
 
-        $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('provider.xml');
         $loader->load('media.xml');
         $loader->load('twig.xml');
-        $loader->load('block.xml');
         $loader->load('security.xml');
         $loader->load('extra.xml');
         $loader->load('form.xml');
         $loader->load('gaufrette.xml');
+
+        // NEXT_MAJOR: Remove Following lines
+        $amazonS3Definition = $container->getDefinition('sonata.media.adapter.service.s3');
+        if (method_exists($amazonS3Definition, 'setFactory')) {
+            $amazonS3Definition->setFactory(array('Aws\S3\S3Client', 'factory'));
+        } else {
+            $amazonS3Definition->setFactoryClass('Aws\S3\S3Client');
+            $amazonS3Definition->setFactoryMethod('factory');
+        }
+
+        // NEXT_MAJOR: Remove Following lines
+        $openCloudDefinition = $container->getDefinition('sonata.media.adapter.filesystem.opencloud.objectstore');
+        if (method_exists($openCloudDefinition, 'setFactory')) {
+            $openCloudDefinition->setFactory(array(new Reference('sonata.media.adapter.filesystem.opencloud.connection'), 'ObjectStore'));
+        } else {
+            $openCloudDefinition->setFactoryService('sonata.media.adapter.filesystem.opencloud.connection');
+            $openCloudDefinition->setFactoryMethod('ObjectStore');
+        }
+
         $loader->load('validators.xml');
         $loader->load('serializer.xml');
 
@@ -57,12 +69,14 @@ class SonataMediaExtension extends Extension
             throw new \InvalidArgumentException(sprintf('SonataMediaBundle - Invalid db driver "%s".', $config['db_driver']));
         }
 
-        $loader->load(sprintf('api_form_%s.xml', $config['db_driver']));
-
         $bundles = $container->getParameter('kernel.bundles');
 
-        if ('doctrine_orm' == $config['db_driver'] && isset($bundles['FOSRestBundle']) && isset($bundles['NelmioApiDocBundle'])) {
-            $loader->load('api_controllers.xml');
+        if (isset($bundles['FOSRestBundle']) && isset($bundles['NelmioApiDocBundle'])) {
+            $loader->load(sprintf('api_form_%s.xml', $config['db_driver']));
+
+            if ('doctrine_orm' == $config['db_driver']) {
+                $loader->load('api_controllers.xml');
+            }
         }
 
         if (isset($bundles['SonataNotificationBundle'])) {
@@ -71,6 +85,10 @@ class SonataMediaExtension extends Extension
 
         if (isset($bundles['SonataFormatterBundle'])) {
             $loader->load('formatter.xml');
+        }
+
+        if (isset($bundles['SonataBlockBundle'])) {
+            $loader->load('block.xml');
         }
 
         if (isset($bundles['SonataSeoBundle'])) {
@@ -114,6 +132,8 @@ class SonataMediaExtension extends Extension
             $pool->addMethodCall('addContext', array($name, $settings['providers'], $formats, $settings['download']));
         }
 
+        $container->setParameter('sonata.media.admin_format', $config['admin_format']);
+
         $strategies = array_unique($strategies);
 
         foreach ($strategies as $strategyId) {
@@ -135,8 +155,8 @@ class SonataMediaExtension extends Extension
     }
 
     /**
-     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
-     * @param array                                                   $config
+     * @param ContainerBuilder $container
+     * @param array            $config
      */
     public function configureProviders(ContainerBuilder $container, $config)
     {
@@ -155,8 +175,8 @@ class SonataMediaExtension extends Extension
     }
 
     /**
-     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
-     * @param array                                                   $config
+     * @param ContainerBuilder $container
+     * @param array            $config
      */
     public function configureBuzz(ContainerBuilder $container, array $config)
     {
@@ -165,26 +185,26 @@ class SonataMediaExtension extends Extension
 
         foreach (array(
             'sonata.media.buzz.connector.curl',
-            'sonata.media.buzz.connector.file_get_contents'
+            'sonata.media.buzz.connector.file_get_contents',
         ) as $connector) {
             $container->getDefinition($connector)
                 ->addMethodCall('setIgnoreErrors', array($config['buzz']['client']['ignore_errors']))
                 ->addMethodCall('setMaxRedirects', array($config['buzz']['client']['max_redirects']))
-                ->addMethodCall('setTimeout',      array($config['buzz']['client']['timeout']))
-                ->addMethodCall('setVerifyPeer',   array($config['buzz']['client']['verify_peer']))
-                ->addMethodCall('setProxy',        array($config['buzz']['client']['proxy']));
+                ->addMethodCall('setTimeout', array($config['buzz']['client']['timeout']))
+                ->addMethodCall('setVerifyPeer', array($config['buzz']['client']['verify_peer']))
+                ->addMethodCall('setProxy', array($config['buzz']['client']['proxy']));
         }
     }
 
     /**
-     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
-     * @param array                                                   $config
+     * @param ContainerBuilder $container
+     * @param array            $config
      */
     public function configureParameterClass(ContainerBuilder $container, array $config)
     {
         $container->setParameter('sonata.media.admin.media.entity', $config['class']['media']);
         $container->setParameter('sonata.media.admin.gallery.entity', $config['class']['gallery']);
-        $container->setParameter('sonata.media.admin.gallery_has_media.entity', $config['class']['gallery_has_media']);
+        $container->setParameter('sonata.media.admin.gallery_item.entity', $config['class']['gallery_item']);
 
         $container->setParameter('sonata.media.media.class', $config['class']['media']);
         $container->setParameter('sonata.media.gallery.class', $config['class']['gallery']);
@@ -194,51 +214,49 @@ class SonataMediaExtension extends Extension
 
     /**
      * @param array $config
-     *
-     * @return void
      */
     public function registerDoctrineMapping(array $config)
     {
         $collector = DoctrineCollector::getInstance();
 
         $collector->addAssociation($config['class']['media'], 'mapOneToMany', array(
-            'fieldName'     => 'galleryHasMedias',
-            'targetEntity'  => $config['class']['gallery_has_media'],
-            'cascade'       => array(
+            'fieldName' => 'galleryItems',
+            'targetEntity' => $config['class']['gallery_item'],
+            'cascade' => array(
                 'persist',
             ),
-            'mappedBy'      => 'media',
+            'mappedBy' => 'media',
             'orphanRemoval' => false,
         ));
 
-        $collector->addAssociation($config['class']['gallery_has_media'], 'mapManyToOne', array(
-            'fieldName'     => 'gallery',
-            'targetEntity'  => $config['class']['gallery'],
-            'cascade'       => array(
+        $collector->addAssociation($config['class']['gallery_item'], 'mapManyToOne', array(
+            'fieldName' => 'gallery',
+            'targetEntity' => $config['class']['gallery'],
+            'cascade' => array(
                 'persist',
             ),
-            'mappedBy'      => NULL,
-            'inversedBy'    => 'galleryHasMedias',
-            'joinColumns'   =>  array(
+            'mappedBy' => null,
+            'inversedBy' => 'galleryItems',
+            'joinColumns' => array(
                 array(
-                    'name'  => 'gallery_id',
+                    'name' => 'gallery_id',
                     'referencedColumnName' => 'id',
                 ),
             ),
             'orphanRemoval' => false,
         ));
 
-        $collector->addAssociation($config['class']['gallery_has_media'], 'mapManyToOne', array(
-            'fieldName'     => 'media',
-            'targetEntity'  => $config['class']['media'],
-            'cascade'       => array(
+        $collector->addAssociation($config['class']['gallery_item'], 'mapManyToOne', array(
+            'fieldName' => 'media',
+            'targetEntity' => $config['class']['media'],
+            'cascade' => array(
                  'persist',
             ),
-            'mappedBy'      => NULL,
-            'inversedBy'    => 'galleryHasMedias',
-            'joinColumns'   => array(
+            'mappedBy' => null,
+            'inversedBy' => 'galleryItems',
+            'joinColumns' => array(
                 array(
-                    'name'  => 'media_id',
+                    'name' => 'media_id',
                     'referencedColumnName' => 'id',
                 ),
             ),
@@ -246,32 +264,32 @@ class SonataMediaExtension extends Extension
         ));
 
         $collector->addAssociation($config['class']['gallery'], 'mapOneToMany', array(
-            'fieldName'     => 'galleryHasMedias',
-            'targetEntity'  => $config['class']['gallery_has_media'],
-            'cascade'       => array(
+            'fieldName' => 'galleryItems',
+            'targetEntity' => $config['class']['gallery_item'],
+            'cascade' => array(
                 'persist',
             ),
-            'mappedBy'      => 'gallery',
+            'mappedBy' => 'gallery',
             'orphanRemoval' => true,
-            'orderBy'       => array(
-                'position'  => 'ASC',
+            'orderBy' => array(
+                'position' => 'ASC',
             ),
         ));
 
         if (interface_exists('Sonata\ClassificationBundle\Model\CategoryInterface')) {
             $collector->addAssociation($config['class']['media'], 'mapManyToOne', array(
-                'fieldName'     => 'category',
-                'targetEntity'  => $config['class']['category'],
-                'cascade'       => array(
+                'fieldName' => 'category',
+                'targetEntity' => $config['class']['category'],
+                'cascade' => array(
                     'persist',
                 ),
-                'mappedBy'      => NULL,
-                'inversedBy'    => NULL,
-                'joinColumns'   => array(
+                'mappedBy' => null,
+                'inversedBy' => null,
+                'joinColumns' => array(
                     array(
-                     'name'                 => 'category_id',
+                     'name' => 'category_id',
                      'referencedColumnName' => 'id',
-                     'onDelete'             => 'SET NULL',
+                     'onDelete' => 'SET NULL',
                     ),
                 ),
                 'orphanRemoval' => false,
@@ -280,12 +298,10 @@ class SonataMediaExtension extends Extension
     }
 
     /**
-     * Inject CDN dependency to default provider
+     * Inject CDN dependency to default provider.
      *
-     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
-     * @param array                                                   $config
-     *
-     * @return void
+     * @param ContainerBuilder $container
+     * @param array            $config
      */
     public function configureCdnAdapter(ContainerBuilder $container, array $config)
     {
@@ -309,6 +325,17 @@ class SonataMediaExtension extends Extension
             $container->removeDefinition('sonata.media.cdn.panther');
         }
 
+        if ($container->hasDefinition('sonata.media.cdn.cloudfront') && isset($config['cdn']['cloudfront'])) {
+            $container->getDefinition('sonata.media.cdn.cloudfront')
+                ->replaceArgument(0, $config['cdn']['cloudfront']['path'])
+                ->replaceArgument(1, $config['cdn']['cloudfront']['key'])
+                ->replaceArgument(2, $config['cdn']['cloudfront']['secret'])
+                ->replaceArgument(3, $config['cdn']['cloudfront']['distribution_id'])
+            ;
+        } else {
+            $container->removeDefinition('sonata.media.cdn.cloudfront');
+        }
+
         if ($container->hasDefinition('sonata.media.cdn.fallback') && isset($config['cdn']['fallback'])) {
             $container->getDefinition('sonata.media.cdn.fallback')
                 ->replaceArgument(0, new Reference($config['cdn']['fallback']['master']))
@@ -320,12 +347,10 @@ class SonataMediaExtension extends Extension
     }
 
     /**
-     * Inject filesystem dependency to default provider
+     * Inject filesystem dependency to default provider.
      *
-     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
-     * @param array                                                   $config
-     *
-     * @return void
+     * @param ContainerBuilder $container
+     * @param array            $config
      */
     public function configureFilesystemAdapter(ContainerBuilder $container, array $config)
     {
@@ -350,7 +375,7 @@ class SonataMediaExtension extends Extension
                     'password' => $config['filesystem']['ftp']['password'],
                     'passive' => $config['filesystem']['ftp']['passive'],
                     'create' => $config['filesystem']['ftp']['create'],
-                    'mode' => $config['filesystem']['ftp']['mode']
+                    'mode' => $config['filesystem']['ftp']['mode'],
                 ))
             ;
         } else {
@@ -372,14 +397,15 @@ class SonataMediaExtension extends Extension
                         'storage' => $config['filesystem']['s3']['storage'],
                         'encryption' => $config['filesystem']['s3']['encryption'],
                         'meta' => $config['filesystem']['s3']['meta'],
-                        'cache_control' => $config['filesystem']['s3']['cache_control']
+                        'cache_control' => $config['filesystem']['s3']['cache_control'],
                 ))
             ;
 
             $container->getDefinition('sonata.media.adapter.service.s3')
                 ->replaceArgument(0, array(
                     'secret' => $config['filesystem']['s3']['secretKey'],
-                    'key'    => $config['filesystem']['s3']['accessKey'],
+                    'key' => $config['filesystem']['s3']['accessKey'],
+                    'region' => $config['filesystem']['s3']['region'],
                 ))
             ;
         } else {
@@ -434,8 +460,8 @@ class SonataMediaExtension extends Extension
     }
 
     /**
-     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
-     * @param array                                                   $config
+     * @param ContainerBuilder $container
+     * @param array            $config
      */
     public function configureExtra(ContainerBuilder $container, array $config)
     {
@@ -450,60 +476,61 @@ class SonataMediaExtension extends Extension
     }
 
     /**
-     * Add class to compile
+     * Add class to compile.
      */
     public function configureClassesToCompile()
     {
         $this->addClassesToCompile(array(
-            "Sonata\\MediaBundle\\CDN\\CDNInterface",
-            "Sonata\\MediaBundle\\CDN\\Fallback",
-            "Sonata\\MediaBundle\\CDN\\PantherPortal",
-            "Sonata\\MediaBundle\\CDN\\Server",
-            "Sonata\\MediaBundle\\Extra\\Pixlr",
-            "Sonata\\MediaBundle\\Filesystem\\Local",
-            "Sonata\\MediaBundle\\Filesystem\\Replicate",
-            "Sonata\\MediaBundle\\Generator\\DefaultGenerator",
-            "Sonata\\MediaBundle\\Generator\\GeneratorInterface",
-            "Sonata\\MediaBundle\\Generator\\ODMGenerator",
-            "Sonata\\MediaBundle\\Generator\\PHPCRGenerator",
-            "Sonata\\MediaBundle\\Metadata\\AmazonMetadataBuilder",
-            "Sonata\\MediaBundle\\Metadata\\MetadataBuilderInterface",
-            "Sonata\\MediaBundle\\Metadata\\NoopMetadataBuilder",
-            "Sonata\\MediaBundle\\Metadata\\ProxyMetadataBuilder",
-            "Sonata\\MediaBundle\\Model\\Gallery",
-            "Sonata\\MediaBundle\\Model\\GalleryHasMedia",
-            "Sonata\\MediaBundle\\Model\\GalleryHasMediaInterface",
-            "Sonata\\MediaBundle\\Model\\GalleryInterface",
-            "Sonata\\MediaBundle\\Model\\GalleryManager",
-            "Sonata\\MediaBundle\\Model\\GalleryManagerInterface",
-            "Sonata\\MediaBundle\\Model\\Media",
-            "Sonata\\MediaBundle\\Model\\MediaInterface",
-            "Sonata\\MediaBundle\\Model\\MediaManagerInterface",
-            "Sonata\\MediaBundle\\Provider\\BaseProvider",
-            "Sonata\\MediaBundle\\Provider\\BaseVideoProvider",
-            "Sonata\\MediaBundle\\Provider\\DailyMotionProvider",
-            "Sonata\\MediaBundle\\Provider\\FileProvider",
-            "Sonata\\MediaBundle\\Provider\\ImageProvider",
-            "Sonata\\MediaBundle\\Provider\\MediaProviderInterface",
-            "Sonata\\MediaBundle\\Provider\\Pool",
-            "Sonata\\MediaBundle\\Provider\\VimeoProvider",
-            "Sonata\\MediaBundle\\Provider\\YouTubeProvider",
-            "Sonata\\MediaBundle\\Resizer\\ResizerInterface",
-            "Sonata\\MediaBundle\\Resizer\\SimpleResizer",
-            "Sonata\\MediaBundle\\Resizer\\SquareResizer",
-            "Sonata\\MediaBundle\\Security\\DownloadStrategyInterface",
-            "Sonata\\MediaBundle\\Security\\ForbiddenDownloadStrategy",
-            "Sonata\\MediaBundle\\Security\\PublicDownloadStrategy",
-            "Sonata\\MediaBundle\\Security\\RolesDownloadStrategy",
-            "Sonata\\MediaBundle\\Security\\SessionDownloadStrategy",
-            "Sonata\\MediaBundle\\Templating\\Helper\\MediaHelper",
-            "Sonata\\MediaBundle\\Thumbnail\\ConsumerThumbnail",
-            "Sonata\\MediaBundle\\Thumbnail\\FormatThumbnail",
-            "Sonata\\MediaBundle\\Thumbnail\\ThumbnailInterface",
-            "Sonata\\MediaBundle\\Twig\\Extension\\MediaExtension",
-            "Sonata\\MediaBundle\\Twig\\Node\\MediaNode",
-            "Sonata\\MediaBundle\\Twig\\Node\\PathNode",
-            "Sonata\\MediaBundle\\Twig\\Node\\ThumbnailNode",
+            'Sonata\\MediaBundle\\CDN\\CDNInterface',
+            'Sonata\\MediaBundle\\CDN\\CloudFront',
+            'Sonata\\MediaBundle\\CDN\\Fallback',
+            'Sonata\\MediaBundle\\CDN\\PantherPortal',
+            'Sonata\\MediaBundle\\CDN\\Server',
+            'Sonata\\MediaBundle\\Extra\\Pixlr',
+            'Sonata\\MediaBundle\\Filesystem\\Local',
+            'Sonata\\MediaBundle\\Filesystem\\Replicate',
+            'Sonata\\MediaBundle\\Generator\\DefaultGenerator',
+            'Sonata\\MediaBundle\\Generator\\GeneratorInterface',
+            'Sonata\\MediaBundle\\Generator\\ODMGenerator',
+            'Sonata\\MediaBundle\\Generator\\PHPCRGenerator',
+            'Sonata\\MediaBundle\\Metadata\\AmazonMetadataBuilder',
+            'Sonata\\MediaBundle\\Metadata\\MetadataBuilderInterface',
+            'Sonata\\MediaBundle\\Metadata\\NoopMetadataBuilder',
+            'Sonata\\MediaBundle\\Metadata\\ProxyMetadataBuilder',
+            'Sonata\\MediaBundle\\Model\\Gallery',
+            'Sonata\\MediaBundle\\Model\\GalleryItem',
+            'Sonata\\MediaBundle\\Model\\GalleryItemInterface',
+            'Sonata\\MediaBundle\\Model\\GalleryInterface',
+            'Sonata\\MediaBundle\\Model\\GalleryManager',
+            'Sonata\\MediaBundle\\Model\\GalleryManagerInterface',
+            'Sonata\\MediaBundle\\Model\\Media',
+            'Sonata\\MediaBundle\\Model\\MediaInterface',
+            'Sonata\\MediaBundle\\Model\\MediaManagerInterface',
+            'Sonata\\MediaBundle\\Provider\\BaseProvider',
+            'Sonata\\MediaBundle\\Provider\\BaseVideoProvider',
+            'Sonata\\MediaBundle\\Provider\\DailyMotionProvider',
+            'Sonata\\MediaBundle\\Provider\\FileProvider',
+            'Sonata\\MediaBundle\\Provider\\ImageProvider',
+            'Sonata\\MediaBundle\\Provider\\MediaProviderInterface',
+            'Sonata\\MediaBundle\\Provider\\Pool',
+            'Sonata\\MediaBundle\\Provider\\VimeoProvider',
+            'Sonata\\MediaBundle\\Provider\\YouTubeProvider',
+            'Sonata\\MediaBundle\\Resizer\\ResizerInterface',
+            'Sonata\\MediaBundle\\Resizer\\SimpleResizer',
+            'Sonata\\MediaBundle\\Resizer\\SquareResizer',
+            'Sonata\\MediaBundle\\Security\\DownloadStrategyInterface',
+            'Sonata\\MediaBundle\\Security\\ForbiddenDownloadStrategy',
+            'Sonata\\MediaBundle\\Security\\PublicDownloadStrategy',
+            'Sonata\\MediaBundle\\Security\\RolesDownloadStrategy',
+            'Sonata\\MediaBundle\\Security\\SessionDownloadStrategy',
+            'Sonata\\MediaBundle\\Templating\\Helper\\MediaHelper',
+            'Sonata\\MediaBundle\\Thumbnail\\ConsumerThumbnail',
+            'Sonata\\MediaBundle\\Thumbnail\\FormatThumbnail',
+            'Sonata\\MediaBundle\\Thumbnail\\ThumbnailInterface',
+            'Sonata\\MediaBundle\\Twig\\Extension\\MediaExtension',
+            'Sonata\\MediaBundle\\Twig\\Node\\MediaNode',
+            'Sonata\\MediaBundle\\Twig\\Node\\PathNode',
+            'Sonata\\MediaBundle\\Twig\\Node\\ThumbnailNode',
         ));
     }
 }

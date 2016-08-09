@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,9 +11,9 @@
 
 namespace Sonata\MediaBundle\Provider;
 
+use Sonata\CoreBundle\Validator\ErrorElement;
 use Sonata\MediaBundle\Model\MediaInterface;
 use Sonata\MediaBundle\Security\DownloadStrategyInterface;
-use Sonata\CoreBundle\Validator\ErrorElement;
 
 class Pool
 {
@@ -22,10 +22,26 @@ class Pool
      */
     protected $providers = array();
 
+    /**
+     * @var array
+     */
     protected $contexts = array();
 
+    /**
+     * @deprecated Deprecated since version 3.1 and will be removed in 4.0. Use $downloadStrategies instead
+     *
+     * @var DownloadStrategyInterface[]
+     */
     protected $downloadSecurities = array();
 
+    /**
+     * @var DownloadStrategyInterface[]
+     */
+    protected $downloadStrategies = array();
+
+    /**
+     * @var string
+     */
     protected $defaultContext;
 
     /**
@@ -41,12 +57,18 @@ class Pool
      *
      * @param string $name
      *
-     * @return \Sonata\MediaBundle\Provider\MediaProviderInterface
+     * @return MediaProviderInterface
      */
     public function getProvider($name)
     {
+        if (!$name) {
+            throw new \InvalidArgumentException('Provider name cannot be empty, did you forget to call setProviderName() in your Media object?');
+        }
+        if (empty($this->providers)) {
+            throw new \RuntimeException(sprintf('Unable to retrieve provider named "%s" since there are no providers configured yet.', $name));
+        }
         if (!isset($this->providers[$name])) {
-            throw new \RuntimeException(sprintf('unable to retrieve the provider named : `%s`', $name));
+            throw new \InvalidArgumentException(sprintf('Unable to retrieve the provider named "%s". Available providers are %s.', $name, '"'.implode('", "', $this->getProviderList()).'"'));
         }
 
         return $this->providers[$name];
@@ -55,8 +77,6 @@ class Pool
     /**
      * @param string                 $name
      * @param MediaProviderInterface $instance
-     *
-     * @return void
      */
     public function addProvider($name, MediaProviderInterface $instance)
     {
@@ -64,18 +84,31 @@ class Pool
     }
 
     /**
-     * @param string                                                 $name
-     * @param \Sonata\MediaBundle\Security\DownloadStrategyInterface $security
+     * @deprecated Deprecated since version 3.1, to be removed in 4.0
+     *
+     * @param string                    $name
+     * @param DownloadStrategyInterface $security
      */
     public function addDownloadSecurity($name, DownloadStrategyInterface $security)
     {
+        @trigger_error('The '.__METHOD__.' method is deprecated since version 3.1 and will be removed in 4.0.', E_USER_DEPRECATED);
+
         $this->downloadSecurities[$name] = $security;
+
+        $this->addDownloadStrategy($name, $security);
+    }
+
+    /**
+     * @param string                    $name
+     * @param DownloadStrategyInterface $security
+     */
+    public function addDownloadStrategy($name, DownloadStrategyInterface $security)
+    {
+        $this->downloadStrategies[$name] = $security;
     }
 
     /**
      * @param array $providers
-     *
-     * @return void
      */
     public function setProviders($providers)
     {
@@ -83,7 +116,7 @@ class Pool
     }
 
     /**
-     * @return \Sonata\MediaBundle\Provider\MediaProviderInterface[]
+     * @return MediaProviderInterface[]
      */
     public function getProviders()
     {
@@ -95,22 +128,20 @@ class Pool
      * @param array  $providers
      * @param array  $formats
      * @param array  $download
-     *
-     * @return void
      */
     public function addContext($name, array $providers = array(), array $formats = array(), array $download = array())
     {
         if (!$this->hasContext($name)) {
             $this->contexts[$name] = array(
                 'providers' => array(),
-                'formats'   => array(),
-                'download'  => array(),
+                'formats' => array(),
+                'download' => array(),
             );
         }
 
         $this->contexts[$name]['providers'] = $providers;
-        $this->contexts[$name]['formats']   = $formats;
-        $this->contexts[$name]['download']  = $download;
+        $this->contexts[$name]['formats'] = $formats;
+        $this->contexts[$name]['download'] = $download;
     }
 
     /**
@@ -131,14 +162,14 @@ class Pool
     public function getContext($name)
     {
         if (!$this->hasContext($name)) {
-            return null;
+            return;
         }
 
         return $this->contexts[$name];
     }
 
     /**
-     * Returns the context list
+     * Returns the context list.
      *
      * @return array
      */
@@ -157,7 +188,7 @@ class Pool
         $context = $this->getContext($name);
 
         if (!$context) {
-            return null;
+            return;
         }
 
         return $context['providers'];
@@ -173,7 +204,7 @@ class Pool
         $context = $this->getContext($name);
 
         if (!$context) {
-            return null;
+            return;
         }
 
         return $context['formats'];
@@ -213,26 +244,48 @@ class Pool
     }
 
     /**
-     * @param \Sonata\MediaBundle\Model\MediaInterface $media
+     * @deprecated Deprecated since version 3.1, to be removed in 4.0
      *
-     * @return \Sonata\MediaBundle\Security\DownloadStrategyInterface
+     * @param MediaInterface $media
+     *
+     * @return DownloadStrategyInterface
+     *
      * @throws \RuntimeException
      */
     public function getDownloadSecurity(MediaInterface $media)
+    {
+        @trigger_error('The '.__METHOD__.' method is deprecated since version 3.1 and will be removed in 4.0.', E_USER_DEPRECATED);
+
+        return array_merge($this->getDownloadSecurity($media), $this->getDownloadStrategy($media));
+    }
+
+    /**
+     * @param MediaInterface $media
+     *
+     * @return DownloadStrategyInterface
+     *
+     * @throws \RuntimeException
+     */
+    public function getDownloadStrategy(MediaInterface $media)
     {
         $context = $this->getContext($media->getContext());
 
         $id = $context['download']['strategy'];
 
-        if (!isset($this->downloadSecurities[$id])) {
-            throw new \RuntimeException('Unable to retrieve the download security : ' . $id);
+        // NEXT_MAJOR: remove this line with the next major release.
+        if (isset($this->downloadSecurities[$id])) {
+            return $this->downloadSecurities[$id];
         }
 
-        return $this->downloadSecurities[$id];
+        if (!isset($this->downloadStrategies[$id])) {
+            throw new \RuntimeException('Unable to retrieve the download security : '.$id);
+        }
+
+        return $this->downloadStrategies[$id];
     }
 
     /**
-     * @param \Sonata\MediaBundle\Model\MediaInterface $media
+     * @param MediaInterface $media
      *
      * @return string
      */
@@ -252,10 +305,8 @@ class Pool
     }
 
     /**
-     * @param \Sonata\CoreBundle\Validator\ErrorElement $errorElement
-     * @param \Sonata\MediaBundle\Model\MediaInterface   $media
-     *
-     * @return void
+     * @param ErrorElement   $errorElement
+     * @param MediaInterface $media
      */
     public function validate(ErrorElement $errorElement, MediaInterface $media)
     {

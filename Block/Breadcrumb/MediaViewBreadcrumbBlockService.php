@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -12,6 +12,7 @@
 namespace Sonata\MediaBundle\Block\Breadcrumb;
 
 use Sonata\BlockBundle\Block\BlockContextInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * BlockService for view Media.
@@ -31,13 +32,25 @@ class MediaViewBreadcrumbBlockService extends BaseGalleryBreadcrumbBlockService
     /**
      * {@inheritdoc}
      */
+    public function configureSettings(OptionsResolver $resolver)
+    {
+        parent::configureSettings($resolver);
+
+        $resolver->setDefaults(array(
+            'media' => false,
+        ));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     protected function getMenu(BlockContextInterface $blockContext)
     {
         $menu = $this->getRootMenu($blockContext);
 
         if ($media = $blockContext->getBlock()->getSetting('media')) {
             $menu->addChild($media->getName(), array(
-                'route'           => 'sonata_media_view',
+                'route' => 'sonata_media_view',
                 'routeParameters' => array(
                     'id' => $media->getId(),
                 ),

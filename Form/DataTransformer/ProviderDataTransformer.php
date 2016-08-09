@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata project.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -11,14 +11,20 @@
 
 namespace Sonata\MediaBundle\Form\DataTransformer;
 
-use Symfony\Component\Form\DataTransformerInterface;
-use Sonata\MediaBundle\Provider\Pool;
 use Sonata\MediaBundle\Model\MediaInterface;
+use Sonata\MediaBundle\Provider\Pool;
+use Symfony\Component\Form\DataTransformerInterface;
 
 class ProviderDataTransformer implements DataTransformerInterface
 {
+    /**
+     * @var Pool
+     */
     protected $pool;
 
+    /**
+     * @var array
+     */
     protected $options;
 
     /**
@@ -28,27 +34,9 @@ class ProviderDataTransformer implements DataTransformerInterface
      */
     public function __construct(Pool $pool, $class, array $options = array())
     {
-        $this->pool    = $pool;
+        $this->pool = $pool;
         $this->options = $this->getOptions($options);
-        $this->class   = $class;
-
-    }
-
-    /**
-     * Define the default options for the DataTransformer
-     *
-     * @param array $options
-     * @return array
-     */
-    protected function getOptions(array $options)
-    {
-
-        return array_merge(array(
-            'provider'      => false,
-            'context'       => false,
-            'empty_on_new'  => true,
-            'new_on_update' => true,
-        ), $options);
+        $this->class = $class;
     }
 
     /**
@@ -57,7 +45,7 @@ class ProviderDataTransformer implements DataTransformerInterface
     public function transform($value)
     {
         if ($value === null) {
-            return new $this->class;
+            return new $this->class();
         }
 
         return $value;
@@ -75,10 +63,10 @@ class ProviderDataTransformer implements DataTransformerInterface
         $binaryContent = $media->getBinaryContent();
 
         // no binary
-        if (empty($binaryContent)){
+        if (empty($binaryContent)) {
             // and no media id
             if ($media->getId() === null && $this->options['empty_on_new']) {
-                return null;
+                return;
             } elseif ($media->getId()) {
                 return $media;
             }
@@ -90,7 +78,7 @@ class ProviderDataTransformer implements DataTransformerInterface
         }
 
         // create a new media to avoid erasing other media or not ...
-        $newMedia = $this->options['new_on_update'] ? new $this->class : $media;
+        $newMedia = $this->options['new_on_update'] ? new $this->class() : $media;
 
         $newMedia->setProviderName($media->getProviderName());
         $newMedia->setContext($media->getContext());
@@ -109,5 +97,22 @@ class ProviderDataTransformer implements DataTransformerInterface
         $provider->transform($newMedia);
 
         return $newMedia;
+    }
+
+    /**
+     * Define the default options for the DataTransformer.
+     *
+     * @param array $options
+     *
+     * @return array
+     */
+    protected function getOptions(array $options)
+    {
+        return array_merge(array(
+            'provider' => false,
+            'context' => false,
+            'empty_on_new' => true,
+            'new_on_update' => true,
+        ), $options);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -18,12 +18,12 @@ class PantherPortalTest extends \PHPUnit_Framework_TestCase
     public function testPortal()
     {
         $client = $this->getMock('ClientSpy', array('flush'), array(), '', false);
-        $client->expects($this->exactly(3))->method('flush')->will($this->returnValue("Flush successfully submitted."));
+        $client->expects($this->exactly(3))->method('flush')->will($this->returnValue('Flush successfully submitted.'));
 
         $panther = new PantherPortal('/foo', 'login', 'pass', 42);
         $panther->setClient($client);
 
-        $this->assertEquals('/foo/bar.jpg', $panther->getPath('bar.jpg', true));
+        $this->assertSame('/foo/bar.jpg', $panther->getPath('bar.jpg', true));
 
         $path = '/mypath/file.jpg';
 

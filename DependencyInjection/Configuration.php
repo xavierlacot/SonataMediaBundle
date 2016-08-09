@@ -1,6 +1,7 @@
 <?php
+
 /*
- * This file is part of the Sonata package.
+ * This file is part of the Sonata Project package.
  *
  * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
  *
@@ -10,19 +11,19 @@
 
 namespace Sonata\MediaBundle\DependencyInjection;
 
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 /**
- * This is the class that validates and merges configuration from your app/config files
+ * This is the class that validates and merges configuration from your app/config files.
  *
  * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class}
  */
 class Configuration implements ConfigurationInterface
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getConfigTreeBuilder()
     {
@@ -33,6 +34,17 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->scalarNode('db_driver')->isRequired()->end()
                 ->scalarNode('default_context')->isRequired()->end()
+                ->arrayNode('admin_format')
+                    ->info('Configures the thumbnail preview for the admin')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('width')->defaultValue(200)->end()
+                        ->scalarNode('height')->defaultValue(false)->end()
+                        ->scalarNode('quality')->defaultValue(90)->end()
+                        ->scalarNode('format')->defaultValue('jpg')->end()
+                        ->scalarNode('constraint')->defaultValue(true)->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
@@ -49,7 +61,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function addContextsSection(ArrayNodeDefinition $node)
     {
@@ -92,7 +104,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function addCdnSection(ArrayNodeDefinition $node)
     {
@@ -109,10 +121,25 @@ class Configuration implements ConfigurationInterface
 
                         ->arrayNode('panther')
                             ->children()
-                                ->scalarNode('path')->isRequired()->end() // http://domain.pantherportal.com/uploads/media
+                                ->scalarNode('path')
+                                    ->info('e.g. http://domain.pantherportal.com/uploads/media')
+                                    ->isRequired()
+                                ->end()
                                 ->scalarNode('site_id')->isRequired()->end()
                                 ->scalarNode('password')->isRequired()->end()
                                 ->scalarNode('username')->isRequired()->end()
+                            ->end()
+                        ->end()
+
+                        ->arrayNode('cloudfront')
+                            ->children()
+                                ->scalarNode('path')
+                                    ->info('e.g. http://xxxxxxxxxxxxxx.cloudfront.net/uploads/media')
+                                    ->isRequired()
+                                ->end()
+                                ->scalarNode('distribution_id')->isRequired()->end()
+                                ->scalarNode('key')->isRequired()->end()
+                                ->scalarNode('secret')->isRequired()->end()
                             ->end()
                         ->end()
 
@@ -129,7 +156,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function addFilesystemSection(ArrayNodeDefinition $node)
     {
@@ -248,7 +275,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function addProvidersSection(ArrayNodeDefinition $node)
     {
@@ -359,13 +386,14 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function addExtraSection(ArrayNodeDefinition $node)
     {
         $node
             ->children()
                 ->arrayNode('pixlr')
+                    ->info('More info at https://pixlr.com/')
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->scalarNode('enabled')->defaultValue(false)->end()
@@ -378,7 +406,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function addModelSection(ArrayNodeDefinition $node)
     {
@@ -389,7 +417,7 @@ class Configuration implements ConfigurationInterface
                     ->children()
                         ->scalarNode('media')->defaultValue('Application\\Sonata\\MediaBundle\\Entity\\Media')->end()
                         ->scalarNode('gallery')->defaultValue('Application\\Sonata\\MediaBundle\\Entity\\Gallery')->end()
-                        ->scalarNode('gallery_has_media')->defaultValue('Application\\Sonata\\MediaBundle\\Entity\\GalleryHasMedia')->end()
+                        ->scalarNode('gallery_item')->defaultValue('Application\\Sonata\\MediaBundle\\Entity\\GalleryItem')->end()
                         ->scalarNode('category')->defaultValue('Application\\Sonata\\ClassificationBundle\\Entity\\Category')->end()
                     ->end()
                 ->end()
@@ -398,7 +426,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function addBuzzSection(ArrayNodeDefinition $node)
     {
@@ -407,7 +435,7 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode('buzz')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->scalarNode('connector')->defaultValue('sonata.media.buzz.connector.file_get_contents')->end()
+                        ->scalarNode('connector')->defaultValue('sonata.media.buzz.connector.curl')->end()
                         ->arrayNode('client')
                         ->addDefaultsIfNotSet()
                         ->children()
@@ -424,7 +452,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @param \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node
+     * @param ArrayNodeDefinition $node
      */
     private function addResizerSection(ArrayNodeDefinition $node)
     {
