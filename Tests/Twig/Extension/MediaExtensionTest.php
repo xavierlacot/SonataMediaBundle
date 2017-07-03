@@ -10,16 +10,13 @@
  */
 
 use Sonata\MediaBundle\Model\MediaInterface;
+use Sonata\MediaBundle\Tests\Helpers\PHPUnit_Framework_TestCase;
 use Sonata\MediaBundle\Twig\Extension\MediaExtension;
 
 /**
- * Class MediaExtensionTest.
- *
- * Unit test of MediaExtension class.
- *
  * @author Geza Buza <bghome@gmail.com>
  */
-class MediaExtensionTest extends \PHPUnit_Framework_TestCase
+class MediaExtensionTest extends PHPUnit_Framework_TestCase
 {
     /**
      * @var Sonata\MediaBundle\Provider\MediaProviderInterface
@@ -41,7 +38,7 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
      */
     private $media;
 
-    public function testThumbnailCanRenderHtmlAttributesGivenByTheProvider()
+    public function testThumbnailHasAllNecessaryAttributes()
     {
         $mediaExtension = new MediaExtension($this->getMediaService(), $this->getMediaManager());
         $mediaExtension->initRuntime($this->getEnvironment());
@@ -54,12 +51,8 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
         );
 
         $provider = $this->getProvider();
-        $provider->expects($this->once())->method('getHelperProperties')->with($media, $format, $options)
-            ->willReturn(array(
-                'title' => 'Test title',
-                'alt' => 'Test title',
-                'data-custom' => 'foo',
-            ));
+        $provider->expects($this->once())->method('generatePublicUrl')->with($media, $format)
+            ->willReturn('http://some.url.com');
 
         $template = $this->getTemplate();
         $template->expects($this->once())
@@ -71,7 +64,7 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
                         'options' => array(
                             'title' => 'Test title',
                             'alt' => 'Test title',
-                            'data-custom' => 'foo',
+                            'src' => 'http://some.url.com',
                         ),
                     )
                 )
@@ -92,13 +85,13 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
 
     public function getMediaManager()
     {
-        return $this->getMock('Sonata\CoreBundle\Model\ManagerInterface');
+        return $this->createMock('Sonata\CoreBundle\Model\ManagerInterface');
     }
 
     public function getProvider()
     {
         if (is_null($this->provider)) {
-            $this->provider = $this->getMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
+            $this->provider = $this->createMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
             $this->provider->method('getFormatName')->will($this->returnArgument(1));
         }
 
@@ -108,7 +101,7 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
     public function getTemplate()
     {
         if (is_null($this->template)) {
-            $this->template = $this->getMock('Twig_TemplateInterface');
+            $this->template = $this->createMock('Twig_TemplateInterface');
         }
 
         return $this->template;
@@ -129,7 +122,7 @@ class MediaExtensionTest extends \PHPUnit_Framework_TestCase
     public function getMedia()
     {
         if (is_null($this->media)) {
-            $this->media = $this->getMock('Sonata\MediaBundle\Model\Media');
+            $this->media = $this->createMock('Sonata\MediaBundle\Model\Media');
             $this->media->method('getProviderStatus')->willReturn(MediaInterface::STATUS_OK);
         }
 

@@ -15,6 +15,7 @@ use Sonata\MediaBundle\Model\MediaInterface;
 use Sonata\MediaBundle\Provider\MediaProviderInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -44,12 +45,13 @@ class MediaController extends Controller
     /**
      * @throws NotFoundHttpException
      *
-     * @param string $id
-     * @param string $format
+     * @param Request $request
+     * @param string  $id
+     * @param string  $format
      *
      * @return Response
      */
-    public function downloadAction($id, $format = 'reference')
+    public function downloadAction(Request $request, $id, $format = 'reference')
     {
         $media = $this->getMedia($id);
 
@@ -57,14 +59,14 @@ class MediaController extends Controller
             throw new NotFoundHttpException(sprintf('unable to find the media with the id : %s', $id));
         }
 
-        if (!$this->get('sonata.media.pool')->getDownloadSecurity($media)->isGranted($media, $this->getRequest())) {
+        if (!$this->get('sonata.media.pool')->getDownloadSecurity($media)->isGranted($media, $request)) {
             throw new AccessDeniedException();
         }
 
         $response = $this->getProvider($media)->getDownloadResponse($media, $format, $this->get('sonata.media.pool')->getDownloadMode($media));
 
         if ($response instanceof BinaryFileResponse) {
-            $response->prepare($this->get('request'));
+            $response->prepare($request);
         }
 
         return $response;
@@ -73,12 +75,13 @@ class MediaController extends Controller
     /**
      * @throws NotFoundHttpException
      *
-     * @param string $id
-     * @param string $format
+     * @param Request $request
+     * @param string  $id
+     * @param string  $format
      *
      * @return Response
      */
-    public function viewAction($id, $format = 'reference')
+    public function viewAction(Request $request, $id, $format = 'reference')
     {
         $media = $this->getMedia($id);
 
@@ -86,15 +89,15 @@ class MediaController extends Controller
             throw new NotFoundHttpException(sprintf('unable to find the media with the id : %s', $id));
         }
 
-        if (!$this->get('sonata.media.pool')->getDownloadSecurity($media)->isGranted($media, $this->getRequest())) {
+        if (!$this->get('sonata.media.pool')->getDownloadSecurity($media)->isGranted($media, $request)) {
             throw new AccessDeniedException();
         }
 
         return $this->render('SonataMediaBundle:Media:view.html.twig', array(
-                'media' => $media,
-                'formats' => $this->get('sonata.media.pool')->getFormatNamesByContext($media->getContext()),
-                'format' => $format,
-            ));
+            'media' => $media,
+            'formats' => $this->get('sonata.media.pool')->getFormatNamesByContext($media->getContext()),
+            'format' => $format,
+        ));
     }
 
     /**
@@ -102,18 +105,19 @@ class MediaController extends Controller
      * optionally saves the image and
      * outputs it to the browser at the same time.
      *
-     * @param string $path
-     * @param string $filter
+     * @param Request $request
+     * @param string  $path
+     * @param string  $filter
      *
      * @return Response
      */
-    public function liipImagineFilterAction($path, $filter)
+    public function liipImagineFilterAction(Request $request, $path, $filter)
     {
         if (!preg_match('@([^/]*)/(.*)/([0-9]*)_([a-z_A-Z]*).jpg@', $path, $matches)) {
             throw new NotFoundHttpException();
         }
 
-        $targetPath = $this->get('liip_imagine.cache.manager')->resolve($this->get('request'), $path, $filter);
+        $targetPath = $this->get('liip_imagine.cache.manager')->resolve($request, $path, $filter);
 
         if ($targetPath instanceof Response) {
             return $targetPath;
@@ -134,7 +138,7 @@ class MediaController extends Controller
 
         $image = $this->get('liip_imagine')->open($tmpFile);
 
-        $response = $this->get('liip_imagine.filter.manager')->get($this->get('request'), $filter, $image, $path);
+        $response = $this->get('liip_imagine.filter.manager')->get($request, $filter, $image, $path);
 
         if ($targetPath) {
             $response = $this->get('liip_imagine.cache.manager')->store($response, $targetPath, $filter);

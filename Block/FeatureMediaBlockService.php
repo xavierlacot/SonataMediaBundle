@@ -17,9 +17,7 @@ use Sonata\CoreBundle\Model\Metadata;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * PageExtension.
- *
- * @author     Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ * @author Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class FeatureMediaBlockService extends MediaBlockService
 {
@@ -47,17 +45,17 @@ class FeatureMediaBlockService extends MediaBlockService
     {
         $formatChoices = $this->getFormatChoices($block->getSetting('mediaId'));
 
-        $formMapper->add('settings', 'sonata_type_immutable_array', array(
+        $formMapper->add('settings', 'Sonata\CoreBundle\Form\Type\ImmutableArrayType', array(
             'keys' => array(
-                array('title', 'text', array(
+                array('title', 'Symfony\Component\Form\Extension\Core\Type\TextType', array(
                     'required' => false,
                     'label' => 'form.label_title',
                 )),
-                array('content', 'textarea', array(
+                array('content', 'Symfony\Component\Form\Extension\Core\Type\TextareaType', array(
                     'required' => false,
                     'label' => 'form.label_content',
                 )),
-                array('orientation', 'choice', array(
+                array('orientation', 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', array(
                     'required' => false,
                     'choices' => array(
                         'left' => 'form.label_orientation_left',
@@ -66,7 +64,7 @@ class FeatureMediaBlockService extends MediaBlockService
                     'label' => 'form.label_orientation',
                 )),
                 array($this->getMediaBuilder($formMapper), null, array()),
-                array('format', 'choice', array(
+                array('format', 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', array(
                     'required' => count($formatChoices) > 0,
                     'choices' => $formatChoices,
                     'label' => 'form.label_format',

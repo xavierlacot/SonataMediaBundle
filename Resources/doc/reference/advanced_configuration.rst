@@ -13,6 +13,9 @@ Full configuration options:
             gallery_item:       Application\Sonata\MediaBundle\Entity\GalleryItem
             category:           Application\Sonata\ClassificationBundle\Entity\Category
 
+        force_disable_category: false # true, if you really want to disable the relation with category
+        category_manager:       null  # null or "sonata.media.manager.category.default" if classification bundle exists
+
         default_context: default
         admin_format:   { width: 200 , quality: 90, format: 'jpg'}
         contexts:
@@ -171,4 +174,3 @@ Full configuration options:
 
         buzz:
             connector:  sonata.media.buzz.connector.file_get_contents # sonata.media.buzz.connector.curl
-

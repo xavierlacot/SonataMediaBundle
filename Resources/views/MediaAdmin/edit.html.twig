@@ -9,6 +9,23 @@ file that was distributed with this source code.
 
 #}
 
+{% import _self as macros %}
+
+{% macro bytesToSize(bytes) %}
+{% spaceless %}
+    {% set kilobyte = 1024 %}
+    {% set megabyte = kilobyte * 1024 %}
+
+    {% if bytes < kilobyte %}
+        {{ bytes ~ ' B' }}
+    {% elseif bytes < megabyte %}
+        {{ (bytes / kilobyte)|number_format(2) ~ ' KB' }}
+    {% else %}
+        {{ (bytes / megabyte)|number_format(2) ~ ' MB' }}
+    {% endif %}
+{% endspaceless %}
+{% endmacro %}
+
 {% extends 'SonataAdminBundle:CRUD:base_edit.html.twig' %}
 
 {% block stylesheets %}
@@ -20,8 +37,7 @@ file that was distributed with this source code.
     </style>
 {% endblock %}
 
-{% block sonata_admin_content %}
-
+{% block form %}
     <div class="row">
         {% if object.id %}
             <div class="col-md-6">
@@ -44,20 +60,22 @@ file that was distributed with this source code.
                         </div>
                         <div class="box-body table-responsive">
 
-                            <center> <!-- yeah, center is still awesome ;) -->
+                            <div class="text-center">
                                 {% media object, 'reference' with {'class': 'img-responsive img-rounded'} %}
-                            </center>
+                            </div>
 
                             <table class="table">
                                 <tr>
                                     <th>{{ 'label.size'|trans({}, 'SonataMediaBundle') }}</th>
-                                    <td>{{ object.width|number_format_decimal }}px x {{ object.height|number_format_decimal }}px
-                                        {% if object.size > 0 %}({{ object.size|number_format_decimal }}o){% endif %}</td>
-                                <tr>
+                                    <td>
+                                        {{ object.width }} x {{ object.height }}
+                                        {% if object.size > 0 %}({{ macros.bytesToSize(object.size) }}){% endif %}
+                                    </td>
+                                </tr>
                                 <tr>
                                     <th>{{ 'label.content_type'|trans({}, 'SonataMediaBundle') }}</th>
                                     <td>{{ object.contenttype }}</td>
-                                <tr>
+                                </tr>
                                 <tr>
                                     <th>{{ 'label.cdn'|trans({}, 'SonataMediaBundle') }}</th>
                                     <td>
@@ -68,14 +86,14 @@ file that was distributed with this source code.
                                             {{ object.cdnflushat|date }}
                                         {% endif %}
                                     </td>
-                                <tr>
+                                </tr>
                                 <tr>
                                     <th><a href="{{ path('sonata_media_download', {'id': object|sonata_urlsafeid }) }}">{{ 'label.protected_download_url'|trans({}, 'SonataMediaBundle') }}</a></th>
                                     <td>
                                         <input type="text" class="form-control" onClick="this.select();" readonly="readonly" value="{{ path('sonata_media_download', {'id': object|sonata_urlsafeid }) }}" />
-                                        <span class="label label-warning">{{ 'label.protected_download_url_notice'|trans({}, 'SonataMediaBundle') }}</span> {{ sonata_media.pool.downloadSecurity(object).description|raw }}
+                                        <span class="label label-warning">{{ 'label.protected_download_url_notice'|trans({}, 'SonataMediaBundle') }}</span> {{ sonata_media.pool.downloadStrategy(object).description|raw }}
                                     </td>
-                                <tr>
+                                </tr>
                                 <tr>
                                     <th>
                                         <a href="{% path object, 'reference' %}" target="_blank">reference</a>
@@ -137,6 +155,4 @@ file that was distributed with this source code.
             Admin.setup_list_modal(jQuery('#pixlr-modal'));
         </script>
     {% endif %}
-
-
-{% endblock sonata_admin_content %}
+{% endblock form %}

@@ -12,37 +12,37 @@
 namespace Sonata\MediaBundle\Tests\Controller\Api;
 
 use Sonata\MediaBundle\Controller\Api\MediaController;
+use Sonata\MediaBundle\Tests\Helpers\PHPUnit_Framework_TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class MediaControllerTest.
- *
- *
  * @author Hugo Briand <briand@ekino.com>
  */
-class MediaControllerTest extends \PHPUnit_Framework_TestCase
+class MediaControllerTest extends PHPUnit_Framework_TestCase
 {
     public function testGetMediaAction()
     {
-        $mManager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
-        $media = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $mManager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $media = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
 
         $mManager->expects($this->once())->method('getPager')->will($this->returnValue(array($media)));
 
         $mController = $this->createMediaController($mManager);
 
-        $params = $this->getMock('FOS\RestBundle\Request\ParamFetcherInterface');
-        $params->expects($this->once())->method('all')->will($this->returnValue(array('page' => 1, 'count' => 10, 'orderBy' => array('id' => 'ASC'))));
-        $params->expects($this->exactly(3))->method('get');
+        $paramFetcher = $this->getMockBuilder('FOS\RestBundle\Request\ParamFetcher')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $paramFetcher->expects($this->exactly(3))->method('get');
+        $paramFetcher->expects($this->once())->method('all')->will($this->returnValue(array()));
 
-        $this->assertSame(array($media), $mController->getMediaAction($params));
+        $this->assertSame(array($media), $mController->getMediaAction($paramFetcher));
     }
 
     public function testGetMediumAction()
     {
-        $media = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $media = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
 
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($media));
 
         $controller = $this->createMediaController($manager);
@@ -61,12 +61,12 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testGetMediumFormatsAction()
     {
-        $media = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $media = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
 
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($media));
 
-        $provider = $this->getMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
+        $provider = $this->createMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
         $provider->expects($this->exactly(2))->method('getHelperProperties')->will($this->returnValue(array('foo' => 'bar')));
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
@@ -94,14 +94,14 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testGetMediumBinariesAction()
     {
-        $media = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $media = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
 
         $binaryResponse = $this->getMockBuilder('Symfony\Component\HttpFoundation\BinaryFileResponse')->disableOriginalConstructor()->getMock();
 
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($media));
 
-        $provider = $this->getMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
+        $provider = $this->createMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
         $provider->expects($this->once())->method('getDownloadResponse')->will($this->returnValue($binaryResponse));
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
@@ -114,9 +114,9 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testDeleteMediumAction()
     {
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('delete');
-        $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($this->getMock('Sonata\MediaBundle\Model\MediaInterface')));
+        $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($this->createMock('Sonata\MediaBundle\Model\MediaInterface')));
 
         $controller = $this->createMediaController($manager);
 
@@ -127,12 +127,12 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testPutMediumAction()
     {
-        $medium = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $medium = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
 
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($medium));
 
-        $provider = $this->getMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
+        $provider = $this->createMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
         $provider->expects($this->once())->method('getName');
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
@@ -143,7 +143,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
         $form->expects($this->once())->method('isValid')->will($this->returnValue(true));
         $form->expects($this->once())->method('getData')->will($this->returnValue($medium));
 
-        $factory = $this->getMock('Symfony\Component\Form\FormFactoryInterface');
+        $factory = $this->createMock('Symfony\Component\Form\FormFactoryInterface');
         $factory->expects($this->once())->method('createNamed')->will($this->returnValue($form));
 
         $controller = $this->createMediaController($manager, $pool, $factory);
@@ -153,12 +153,12 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testPutMediumInvalidFormAction()
     {
-        $medium = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $medium = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
 
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($medium));
 
-        $provider = $this->getMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
+        $provider = $this->createMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
         $provider->expects($this->once())->method('getName');
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
@@ -168,7 +168,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
         $form->expects($this->once())->method('handleRequest');
         $form->expects($this->once())->method('isValid')->will($this->returnValue(false));
 
-        $factory = $this->getMock('Symfony\Component\Form\FormFactoryInterface');
+        $factory = $this->createMock('Symfony\Component\Form\FormFactoryInterface');
         $factory->expects($this->once())->method('createNamed')->will($this->returnValue($form));
 
         $controller = $this->createMediaController($manager, $pool, $factory);
@@ -178,13 +178,13 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testPostProviderMediumAction()
     {
-        $medium = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $medium = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
         $medium->expects($this->once())->method('setProviderName');
 
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('create')->will($this->returnValue($medium));
 
-        $provider = $this->getMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
+        $provider = $this->createMock('Sonata\MediaBundle\Provider\MediaProviderInterface');
         $provider->expects($this->once())->method('getName');
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
@@ -195,7 +195,7 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
         $form->expects($this->once())->method('isValid')->will($this->returnValue(true));
         $form->expects($this->once())->method('getData')->will($this->returnValue($medium));
 
-        $factory = $this->getMock('Symfony\Component\Form\FormFactoryInterface');
+        $factory = $this->createMock('Symfony\Component\Form\FormFactoryInterface');
         $factory->expects($this->once())->method('createNamed')->will($this->returnValue($form));
 
         $controller = $this->createMediaController($manager, $pool, $factory);
@@ -204,14 +204,14 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     * @expectedException \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
     public function testPostProviderActionNotFound()
     {
-        $medium = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $medium = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
         $medium->expects($this->once())->method('setProviderName');
 
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('create')->will($this->returnValue($medium));
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
@@ -223,10 +223,10 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
 
     public function testPutMediumBinaryContentAction()
     {
-        $media = $this->getMock('Sonata\MediaBundle\Model\MediaInterface');
+        $media = $this->createMock('Sonata\MediaBundle\Model\MediaInterface');
         $media->expects($this->once())->method('setBinaryContent');
 
-        $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+        $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         $manager->expects($this->once())->method('findOneBy')->will($this->returnValue($media));
 
         $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
@@ -239,13 +239,13 @@ class MediaControllerTest extends \PHPUnit_Framework_TestCase
     protected function createMediaController($manager = null, $pool = null, $factory = null)
     {
         if (null === $manager) {
-            $manager = $this->getMock('Sonata\MediaBundle\Model\MediaManagerInterface');
+            $manager = $this->createMock('Sonata\MediaBundle\Model\MediaManagerInterface');
         }
         if (null === $pool) {
             $pool = $this->getMockBuilder('Sonata\MediaBundle\Provider\Pool')->disableOriginalConstructor()->getMock();
         }
         if (null === $factory) {
-            $factory = $this->getMock('Symfony\Component\Form\FormFactoryInterface');
+            $factory = $this->createMock('Symfony\Component\Form\FormFactoryInterface');
         }
 
         return new MediaController($manager, $pool, $factory);

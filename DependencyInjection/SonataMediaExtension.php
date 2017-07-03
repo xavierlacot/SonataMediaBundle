@@ -15,14 +15,13 @@ use Sonata\EasyExtendsBundle\Mapper\DoctrineCollector;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
- * MediaExtension.
- *
- * @author     Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ * @author Thomas Rabaix <thomas.rabaix@sonata-project.org>
  */
 class SonataMediaExtension extends Extension
 {
@@ -43,25 +42,6 @@ class SonataMediaExtension extends Extension
         $loader->load('extra.xml');
         $loader->load('form.xml');
         $loader->load('gaufrette.xml');
-
-        // NEXT_MAJOR: Remove Following lines
-        $amazonS3Definition = $container->getDefinition('sonata.media.adapter.service.s3');
-        if (method_exists($amazonS3Definition, 'setFactory')) {
-            $amazonS3Definition->setFactory(array('Aws\S3\S3Client', 'factory'));
-        } else {
-            $amazonS3Definition->setFactoryClass('Aws\S3\S3Client');
-            $amazonS3Definition->setFactoryMethod('factory');
-        }
-
-        // NEXT_MAJOR: Remove Following lines
-        $openCloudDefinition = $container->getDefinition('sonata.media.adapter.filesystem.opencloud.objectstore');
-        if (method_exists($openCloudDefinition, 'setFactory')) {
-            $openCloudDefinition->setFactory(array(new Reference('sonata.media.adapter.filesystem.opencloud.connection'), 'ObjectStore'));
-        } else {
-            $openCloudDefinition->setFactoryService('sonata.media.adapter.filesystem.opencloud.connection');
-            $openCloudDefinition->setFactoryMethod('ObjectStore');
-        }
-
         $loader->load('validators.xml');
         $loader->load('serializer.xml');
 
@@ -99,6 +79,11 @@ class SonataMediaExtension extends Extension
             $container->removeDefinition('sonata.media.thumbnail.liip_imagine');
         }
 
+        if ($this->isClassificationEnabled($config)) {
+            $loader->load('category.xml');
+            $container->setAlias('sonata.media.manager.category', $config['category_manager']);
+        }
+
         if (!array_key_exists($config['default_context'], $config['contexts'])) {
             throw new \InvalidArgumentException(sprintf('SonataMediaBundle - Invalid default context : %s, available : %s', $config['default_context'], json_encode(array_keys($config['contexts']))));
         }
@@ -114,10 +99,6 @@ class SonataMediaExtension extends Extension
 
         $pool = $container->getDefinition('sonata.media.pool');
         $pool->replaceArgument(0, $config['default_context']);
-
-        // this shameless hack is done in order to have one clean configuration
-        // for adding formats ....
-        $pool->addMethodCall('__hack__', $config);
 
         $strategies = array();
 
@@ -137,7 +118,7 @@ class SonataMediaExtension extends Extension
         $strategies = array_unique($strategies);
 
         foreach ($strategies as $strategyId) {
-            $pool->addMethodCall('addDownloadSecurity', array($strategyId, new Reference($strategyId)));
+            $pool->addMethodCall('addDownloadStrategy', array($strategyId, new Reference($strategyId)));
         }
 
         if ('doctrine_orm' == $config['db_driver']) {
@@ -151,6 +132,8 @@ class SonataMediaExtension extends Extension
         $this->configureExtra($container, $config);
         $this->configureBuzz($container, $config);
         $this->configureProviders($container, $config);
+        $this->configureAdapters($container, $config);
+        $this->configureResizers($container, $config);
         $this->configureClassesToCompile();
     }
 
@@ -158,7 +141,7 @@ class SonataMediaExtension extends Extension
      * @param ContainerBuilder $container
      * @param array            $config
      */
-    public function configureProviders(ContainerBuilder $container, $config)
+    public function configureProviders(ContainerBuilder $container, array $config)
     {
         $container->getDefinition('sonata.media.provider.image')
             ->replaceArgument(5, array_map('strtolower', $config['providers']['image']['allowed_extensions']))
@@ -276,7 +259,7 @@ class SonataMediaExtension extends Extension
             ),
         ));
 
-        if (interface_exists('Sonata\ClassificationBundle\Model\CategoryInterface')) {
+        if ($this->isClassificationEnabled($config)) {
             $collector->addAssociation($config['class']['media'], 'mapManyToOne', array(
                 'fieldName' => 'category',
                 'targetEntity' => $config['class']['category'],
@@ -401,13 +384,25 @@ class SonataMediaExtension extends Extension
                 ))
             ;
 
-            $container->getDefinition('sonata.media.adapter.service.s3')
+            if (3 === $config['filesystem']['s3']['sdk_version']) {
+                $container->getDefinition('sonata.media.adapter.service.s3')
                 ->replaceArgument(0, array(
-                    'secret' => $config['filesystem']['s3']['secretKey'],
-                    'key' => $config['filesystem']['s3']['accessKey'],
+                    'credentials' => array(
+                        'secret' => $config['filesystem']['s3']['secretKey'],
+                        'key' => $config['filesystem']['s3']['accessKey'],
+                    ),
                     'region' => $config['filesystem']['s3']['region'],
+                    'version' => $config['filesystem']['s3']['version'],
                 ))
             ;
+            } else {
+                $container->getDefinition('sonata.media.adapter.service.s3')
+                    ->replaceArgument(0, array(
+                        'secret' => $config['filesystem']['s3']['secretKey'],
+                        'key' => $config['filesystem']['s3']['accessKey'],
+                    ))
+                ;
+            }
         } else {
             $container->removeDefinition('sonata.media.adapter.filesystem.s3');
             $container->removeDefinition('sonata.media.filesystem.s3');
@@ -532,5 +527,61 @@ class SonataMediaExtension extends Extension
             'Sonata\\MediaBundle\\Twig\\Node\\PathNode',
             'Sonata\\MediaBundle\\Twig\\Node\\ThumbnailNode',
         ));
+    }
+
+    /**
+     * Checks if the classification of media is enabled.
+     *
+     * @param array $config
+     *
+     * @return bool
+     */
+    private function isClassificationEnabled(array $config)
+    {
+        return interface_exists('Sonata\ClassificationBundle\Model\CategoryInterface')
+            && !$config['force_disable_category'];
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param array            $config
+     */
+    private function configureAdapters(ContainerBuilder $container, array $config)
+    {
+        foreach (array('gd', 'imagick', 'gmagick') as $adapter) {
+            if ($container->hasParameter('sonata.media.adapter.image.'.$adapter.'.class')) {
+                $container->register('sonata.media.adapter.image.'.$adapter, $container->getParameter('sonata.media.adapter.image.'.$adapter.'.class'));
+            }
+        }
+        $container->setAlias('sonata.media.adapter.image.default', $config['adapters']['default']);
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param array            $config
+     */
+    private function configureResizers(ContainerBuilder $container, array $config)
+    {
+        if ($container->hasParameter('sonata.media.resizer.simple.class')) {
+            $class = $container->getParameter('sonata.media.resizer.simple.class');
+            $definition = new Definition($class, array(
+                new Reference('sonata.media.adapter.image.default'),
+                '%sonata.media.resizer.simple.adapter.mode%',
+                new Reference('sonata.media.metadata.proxy'),
+            ));
+            $container->setDefinition('sonata.media.resizer.simple', $definition);
+        }
+
+        if ($container->hasParameter('sonata.media.resizer.square.class')) {
+            $class = $container->getParameter('sonata.media.resizer.square.class');
+            $definition = new Definition($class, array(
+                new Reference('sonata.media.adapter.image.default'),
+                '%sonata.media.resizer.square.adapter.mode%',
+                new Reference('sonata.media.metadata.proxy'),
+            ));
+            $container->setDefinition('sonata.media.resizer.square', $definition);
+        }
+
+        $container->setAlias('sonata.media.resizer.default', $config['resizers']['default']);
     }
 }

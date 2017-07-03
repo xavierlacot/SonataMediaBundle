@@ -35,10 +35,13 @@ class MediaAdmin extends Admin
             ->add('enabled')
             ->add('context', null, array(
                 'show_filter' => $this->getPersistentParameter('hide_context') !== true,
-            ), 'choice', $options)
-            ->add('category', null, array(
-                'show_filter' => false,
-            ))
+            ), 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', $options);
+
+        if (null !== $this->categoryManager) {
+            $datagridMapper->add('category', null, array('show_filter' => false));
+        }
+
+        $datagridMapper
             ->add('width')
             ->add('height')
             ->add('contentType')
@@ -51,14 +54,14 @@ class MediaAdmin extends Admin
             $providers[$name] = $name;
         }
 
-        $datagridMapper->add('providerName', 'doctrine_orm_choice', array(
+        $datagridMapper->add('providerName', 'Sonata\DoctrineORMAdminBundle\Filter\ChoiceFilter', array(
             'field_options' => array(
                 'choices' => $providers,
                 'required' => false,
                 'multiple' => false,
                 'expanded' => false,
             ),
-            'field_type' => 'choice',
+            'field_type' => 'Symfony\Component\Form\Extension\Core\Type\ChoiceType',
         ));
     }
 }

@@ -16,12 +16,8 @@ use Sonata\MediaBundle\Provider\Pool;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
- * Class ApiMediaType.
- *
- *
  * @author Hugo Briand <briand@ekino.com>
  */
 class ApiMediaType extends AbstractType
@@ -61,16 +57,6 @@ class ApiMediaType extends AbstractType
 
     /**
      * {@inheritdoc}
-     *
-     * @deprecated Remove it when bumping requirements to Symfony >=2.7
-     */
-    public function setDefaultOptions(OptionsResolverInterface $resolver)
-    {
-        $this->configureOptions($resolver);
-    }
-
-    /**
-     * {@inheritdoc}
      */
     public function configureOptions(OptionsResolver $resolver)
     {
@@ -85,11 +71,7 @@ class ApiMediaType extends AbstractType
      */
     public function getParent()
     {
-        // NEXT_MAJOR: Return 'Sonata\MediaBundle\Form\Type\ApiDoctrineMediaType'
-        // (when requirement of Symfony is >= 2.8)
-        return method_exists('Symfony\Component\Form\AbstractType', 'getBlockPrefix')
-            ? 'Sonata\MediaBundle\Form\Type\ApiDoctrineMediaType'
-            : 'sonata_media_api_form_doctrine_media';
+        return 'Sonata\MediaBundle\Form\Type\ApiDoctrineMediaType';
     }
 
     /**

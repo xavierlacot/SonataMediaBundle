@@ -13,13 +13,14 @@ namespace Sonata\MediaBundle\Tests\Provider;
 
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\MediaBundle\Provider\MediaProviderInterface;
+use Sonata\MediaBundle\Tests\Helpers\PHPUnit_Framework_TestCase;
 use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Form\FormTypeInterface;
 
 /**
  * @author Virgile Vivier <virgilevivier@gmail.com>
  */
-abstract class AbstractProviderTest extends \PHPUnit_Framework_TestCase
+abstract class AbstractProviderTest extends PHPUnit_Framework_TestCase
 {
     /**
      * @var FormBuilder
@@ -41,7 +42,7 @@ abstract class AbstractProviderTest extends \PHPUnit_Framework_TestCase
      */
     protected $provider;
 
-    public function setUp()
+    protected function setUp()
     {
         // NEXT_MAJOR: Hack for php 5.3 only, remove it when requirement of PHP is >= 5.4
         $that = $this;
@@ -51,24 +52,8 @@ abstract class AbstractProviderTest extends \PHPUnit_Framework_TestCase
             ->expects($this->any())
             ->method('add')
             ->will($this->returnCallback(function ($name, $type = null) use ($that) {
-                // NEXT_MAJOR: Remove this "if" (when requirement of Symfony is >= 2.8)
-                if (method_exists('Symfony\Component\Form\AbstractType', 'getBlockPrefix')) {
-                    if (null !== $type) {
-                        $isFQCN = class_exists($type);
-                        if (!$isFQCN && method_exists('Symfony\Component\Form\AbstractType', 'getName')) {
-                            // 2.8
-                            @trigger_error(
-                                sprintf(
-                                    'Accessing type "%s" by its string name is deprecated since version 2.8 and will be removed in 3.0.'
-                                    .' Use the fully-qualified type class name instead.',
-                                    $type
-                                ),
-                                E_USER_DEPRECATED)
-                            ;
-                        }
-
-                        $that->assertTrue($isFQCN, sprintf('Unable to ensure %s is a FQCN', $type));
-                    }
+                if (null !== $type) {
+                    $that->assertTrue(class_exists($type), sprintf('Unable to ensure %s is a FQCN', $type));
                 }
             }));
 
@@ -77,27 +62,10 @@ abstract class AbstractProviderTest extends \PHPUnit_Framework_TestCase
             ->expects($this->any())
             ->method('add')
             ->will($this->returnCallback(function ($name, $type = null) use ($that) {
-                // NEXT_MAJOR: Remove this "if" (when requirement of Symfony is >= 2.8)
-                if (method_exists('Symfony\Component\Form\AbstractType', 'getBlockPrefix')) {
-                    if (null !== $type) {
-                        $isFQCN = class_exists($type);
-                        if (!$isFQCN && method_exists('Symfony\Component\Form\AbstractType', 'getName')) {
-                            // 2.8
-                            @trigger_error(
-                                sprintf(
-                                    'Accessing type "%s" by its string name is deprecated since version 2.8 and will be removed in 3.0.'
-                                    .' Use the fully-qualified type class name instead.',
-                                    $type
-                                ),
-                                E_USER_DEPRECATED)
-                            ;
-                        }
-
-                        $that->assertTrue($isFQCN, sprintf('Unable to ensure %s is a FQCN', $type));
-                    }
+                if (null !== $type) {
+                    $that->assertTrue(class_exists($type), sprintf('Unable to ensure %s is a FQCN', $type));
                 }
             }));
-
 
         $this->formBuilder->expects($this->any())->method('getOption')->willReturn('api');
 

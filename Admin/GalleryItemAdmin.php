@@ -37,11 +37,11 @@ class GalleryItemAdmin extends AbstractAdmin
         }
 
         $formMapper
-            ->add('media', 'sonata_type_model_list', array('required' => false), array(
+            ->add('media', 'Sonata\AdminBundle\Form\Type\ModelListType', array('required' => false), array(
                 'link_parameters' => $link_parameters,
             ))
             ->add('enabled', null, array('required' => false))
-            ->add('position', 'hidden')
+            ->add('position', 'Symfony\Component\Form\Extension\Core\Type\HiddenType')
         ;
     }
 

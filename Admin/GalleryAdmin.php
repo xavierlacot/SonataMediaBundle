@@ -118,25 +118,25 @@ class GalleryAdmin extends AbstractAdmin
 
         $formMapper
             ->with('Options')
-                ->add('context', 'choice', array(
+                ->add('context', 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', array(
                     'choices' => $contexts,
-                    'translation_domain' => 'SonataMediaBundle',
                 ))
                 ->add('enabled', null, array('required' => false))
                 ->add('name')
-                ->add('defaultFormat', 'choice', array('choices' => $formats))
+                ->ifTrue($formats)
+                    ->add('defaultFormat', 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', array(
+                        'choices' => $formats,
+                    ))
+                ->ifEnd()
             ->end()
             ->with('Gallery')
-                ->add('galleryItems', 'sonata_type_collection', array(
-                        'cascade_validation' => true,
-                    ), array(
-                        'edit' => 'inline',
-                        'inline' => 'table',
-                        'sortable' => 'position',
-                        'link_parameters' => array('context' => $context),
-                        'admin_code' => 'sonata.media.admin.gallery_item',
-                    )
-                )
+                ->add('galleryItems', 'Sonata\CoreBundle\Form\Type\CollectionType', array(), array(
+                    'edit' => 'inline',
+                    'inline' => 'table',
+                    'sortable' => 'position',
+                    'link_parameters' => array('context' => $context),
+                    'admin_code' => 'sonata.media.admin.gallery_item',
+                ))
             ->end()
         ;
     }
